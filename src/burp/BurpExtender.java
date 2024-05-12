@@ -7,8 +7,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
+import javax.swing.*;
 
 import com.bit4woo.utilbox.burp.HelperPlus;
 import com.google.gson.Gson;
@@ -22,6 +21,7 @@ import knife.*;
 import messageTab.U2C.ChineseTabFactory;
 import config.ProcessManager;
 import org.apache.commons.lang3.StringUtils;
+import plus.*;
 
 public class BurpExtender extends GUI implements IBurpExtender, IContextMenuFactory, ITab, IHttpListener, IProxyListener, IExtensionStateListener {
 
@@ -57,27 +57,40 @@ public class BurpExtender extends GUI implements IBurpExtender, IContextMenuFact
         BurpExtender.stdout.println(getFullExtensionName());
         BurpExtender.stdout.println(github);
 
-        configTable = new ConfigTable(new ConfigTableModel());
-        configPanel.setViewportView(configTable);
+        // [重要] 使用 SwingUtilities.invokeLater 解决操作过快 导致出现swing崩溃的问题
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                configTable = new ConfigTable(new ConfigTableModel());
+                configPanel.setViewportView(configTable);
 
-        String content = callbacks.loadExtensionSetting("knifeconfig");
-        if (StringUtils.isEmpty(content)) {
-            content = initConfig();
+                String content = callbacks.loadExtensionSetting("knifeconfig");
+                if (StringUtils.isEmpty(content)) {
+                    content = initConfig();
+                }
+
+                configManager = new Gson().fromJson(content, ConfigManager.class);
+                showToUI(configManager);
+
+                ChineseTabFactory chntabFactory = new ChineseTabFactory(null, false, helpers, callbacks);
+
+                //各项数据初始化完成后在进行这些注册操作，避免插件加载时的空指针异常
+                callbacks.setExtensionName(getFullExtensionName());
+                callbacks.registerContextMenuFactory(BurpExtender.this);// for menus
+                callbacks.registerMessageEditorTabFactory(chntabFactory);// for Chinese
+                callbacks.addSuiteTab(BurpExtender.this);
+                callbacks.registerHttpListener(BurpExtender.this);
+                callbacks.registerProxyListener(BurpExtender.this);
+                callbacks.registerExtensionStateListener(BurpExtender.this);
+
+                //自动加载用户指定的 Project Json文件,如果不存在会自动保存当前配置
+                AdvScopeUtils.autoLoadProjectConfig(callbacks);
+                //追加用户设置的默认需要排除的数据
+                AdvScopeUtils.addDefaultExcludeHosts(callbacks);
+
+                BurpExtender.stdout.println("Load Extension Success ...");
+            }
         }
-
-        configManager = new Gson().fromJson(content, ConfigManager.class);
-        showToUI(configManager);
-
-        ChineseTabFactory chntabFactory = new ChineseTabFactory(null, false, helpers, callbacks);
-
-        //各项数据初始化完成后在进行这些注册操作，避免插件加载时的空指针异常
-        callbacks.setExtensionName(getFullExtensionName());
-        callbacks.registerContextMenuFactory(this);// for menus
-        callbacks.registerMessageEditorTabFactory(chntabFactory);// for Chinese
-        callbacks.addSuiteTab(BurpExtender.this);
-        callbacks.registerHttpListener(this);
-        callbacks.registerProxyListener(this);
-        callbacks.registerExtensionStateListener(this);
+        );
     }
 
 
@@ -129,6 +142,15 @@ public class BurpExtender extends GUI implements IBurpExtender, IContextMenuFact
         if (updateHeader.getItemCount() > 0) {
             menu_item_list.add(updateHeader);
         }
+
+        //winzer0 添加 配置文件相关 //手动更新用户指定的 Project Json 文件
+        menu_item_list.add(new ProjectConfigLoadMenu(this));
+        menu_item_list.add(new ProjectConfigSaveMenu(this));
+        menu_item_list.add(new ProjectScopeClearMenu(this));
+        menu_item_list.add(new AddHostToInScopeMenu(this));
+        menu_item_list.add(new AddHostToInScopeAdvMenu(this));
+        menu_item_list.add(new AddHostToExScopeMenu(this));
+        menu_item_list.add(new AddHostToExScopeAdvMenu(this));
 
         //扫描攻击相关
         menu_item_list.add(new AddHostToScopeMenu(this));

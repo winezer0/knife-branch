@@ -72,8 +72,8 @@ public class ConfigEntry {
 
     public static final String Run_External_Cmd = "Run_External_Cmd";
 
-    public static final String Scope_Comment_Global = " This config affects ALL requests; ";
-    public static final String Scope_Comment_checkbox = " The scope of this config is controlled by the checkbox above; ";
+    public static final String Scope_Comment_Global = "此配置影响所有请求; ";
+    public static final String Scope_Comment_checkbox = "此配置影响范围由上面的复选框控制; ";
 
     public ConfigEntry() {
         //to resolve "default constructor not found" error
