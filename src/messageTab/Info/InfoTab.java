@@ -1,19 +1,17 @@
 package messageTab.Info;
 
-import java.awt.BorderLayout;
 import java.awt.Component;
 
 import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
+import javax.swing.SwingWorker;
 
-import org.apache.commons.text.StringEscapeUtils;
+import com.bit4woo.utilbox.utils.ByteArrayUtils;
 
+import burp.BurpExtender;
 import burp.IBurpExtenderCallbacks;
 import burp.IExtensionHelpers;
 import burp.IMessageEditorController;
 import burp.IMessageEditorTab;
-import burp.IRequestInfo;
-import burp.IResponseInfo;
 
 /** 
  * @author bit4woo
@@ -33,22 +31,10 @@ public class InfoTab implements IMessageEditorTab{
 
 	private byte[] originContent;
 
-	private static IExtensionHelpers helpers;
-
 	public InfoTab(IMessageEditorController controller, boolean editable, IExtensionHelpers helpers, IBurpExtenderCallbacks callbacks)
 	{
-		panel = createpanel();
-		InfoTab.helpers = helpers;
-	}
-
-
-	public JPanel createpanel() {
-
-		JPanel contentPane = new JPanel();
-		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
-		contentPane.setLayout(new BorderLayout(0, 0));
-
-		return contentPane;
+		panel = new InfoPanel(this);
+		BurpExtender.getCallbacks().customizeUiComponent(panel);//尝试使用burp的font size
 	}
 
 	@Override
@@ -69,11 +55,27 @@ public class InfoTab implements IMessageEditorTab{
 		return true;
 	}
 
+	/**
+	 * 每次切换到这个tab，都会调用这个函数。应考虑避免重复劳动，根据originContent是否变化来判断。
+	 */
 	@Override
 	public void setMessage(byte[] content, boolean isRequest)
-	{
-		originContent = content;
-		
+	{	
+		if (ByteArrayUtils.equals(originContent,content)) {
+			return;
+		}else {
+			originContent = content;
+			SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+				@Override
+				protected Void doInBackground() throws Exception {
+					originContent = content;
+					InfoEntry aaa = new InfoEntry("http://www.baidu.com",InfoEntry.Type_URL);
+					((InfoPanel)panel).getTable().getInfoTableModel().addNewInfoEntry(aaa);
+					return null;
+				}
+			};
+			worker.execute();
+		}
 	}
 
 
@@ -99,19 +101,7 @@ public class InfoTab implements IMessageEditorTab{
 		return null;//TODO
 	}
 
-	public static boolean isJSON(byte[] content,boolean isRequest) {
-		if (isRequest) {
-			IRequestInfo requestInfo = helpers.analyzeRequest(content);
-			return requestInfo.getContentType() == IRequestInfo.CONTENT_TYPE_JSON;
-		} else {
-			IResponseInfo responseInfo = helpers.analyzeResponse(content);
-			return responseInfo.getInferredMimeType().equals("JSON");
-		}
-	}
-
 
 	public static void main(String[] args) {
-		String aaa = "STK_7411642209636022({\"errno\":1003,\"errmsg\":\"\\u7528\\u6237\\u672a\\u767b\\u5f55\",\"errmsg_lang\":{\"zh\":\"\\u7528\\u6237\\u672a\\u767b\\u5f55\",\"en\":\"User is not logged in.\",\"zh-HK\":\"\\u7528\\u6236\\u672a\\u767b\\u9304\"},\"data\":null});";
-		System.out.println(StringEscapeUtils.unescapeJava(aaa));
 	}
 }
