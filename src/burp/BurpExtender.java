@@ -7,8 +7,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
+import javax.swing.*;
 
 import com.bit4woo.utilbox.burp.HelperPlus;
 import com.google.gson.Gson;
@@ -23,6 +22,7 @@ import messageTab.Info.InfoTabFactory;
 import messageTab.U2C.ChineseTabFactory;
 import config.ProcessManager;
 import org.apache.commons.lang3.StringUtils;
+import plus.*;
 
 public class BurpExtender extends GUI implements IBurpExtender, IContextMenuFactory, ITab, IHttpListener, IProxyListener, IExtensionStateListener {
 
@@ -69,18 +69,22 @@ public class BurpExtender extends GUI implements IBurpExtender, IContextMenuFact
         configManager = new Gson().fromJson(content, ConfigManager.class);
         showToUI(configManager);
 
+        // [重要] 使用 SwingUtilities.invokeLater 解决操作过快 导致出现swing崩溃的问题
+        SwingUtilities.invokeLater(new Runnable() { public void run() {
         ChineseTabFactory chntabFactory = new ChineseTabFactory(null, false, helpers, callbacks);
         InfoTabFactory infotabFactory = new InfoTabFactory(null, false, helpers, callbacks);
 
         //各项数据初始化完成后在进行这些注册操作，避免插件加载时的空指针异常
         callbacks.setExtensionName(getFullExtensionName());
-        callbacks.registerContextMenuFactory(this);// for menus
+        callbacks.registerContextMenuFactory(BurpExtender.this);// for menus
         callbacks.registerMessageEditorTabFactory(chntabFactory);// for Chinese
         callbacks.registerMessageEditorTabFactory(infotabFactory);// for Chinese
         callbacks.addSuiteTab(BurpExtender.this);
-        callbacks.registerHttpListener(this);
-        callbacks.registerProxyListener(this);
-        callbacks.registerExtensionStateListener(this);
+        callbacks.registerHttpListener(BurpExtender.this);
+        callbacks.registerProxyListener(BurpExtender.this);
+        callbacks.registerExtensionStateListener(BurpExtender.this);
+
+        }});
     }
 
 
@@ -132,6 +136,15 @@ public class BurpExtender extends GUI implements IBurpExtender, IContextMenuFact
         if (updateHeader.getItemCount() > 0) {
             menu_item_list.add(updateHeader);
         }
+
+        //winzer0 添加 配置文件相关 //手动更新用户指定的 Project Json 文件
+        menu_item_list.add(new ProjectConfigLoadMenu(this));
+        menu_item_list.add(new ProjectConfigSaveMenu(this));
+        menu_item_list.add(new ProjectScopeClearMenu(this));
+        menu_item_list.add(new AddHostToInScopeMenu(this));
+        menu_item_list.add(new AddHostToInScopeAdvMenu(this));
+        menu_item_list.add(new AddHostToExScopeMenu(this));
+        menu_item_list.add(new AddHostToExScopeAdvMenu(this));
 
         //扫描攻击相关
         menu_item_list.add(new AddHostToScopeMenu(this));
