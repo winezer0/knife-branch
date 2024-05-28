@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import javax.swing.*;
@@ -255,6 +256,22 @@ public class BurpExtender extends GUI implements IBurpExtender, IContextMenuFact
 
                     if (isInCheckBoxScope(toolFlag, messageInfo)) {
                         ProcessManager.doChunk(messageIsRequest, messageInfo);
+                    }
+                }
+            } else {
+                // response 修改
+                if(true) {
+                    //给 Options 方法的响应 添加 Content-Type: application/octet-stream 用于过滤
+                    if (AdvScopeUtils.getGuiConfigValue("AddRespHeaderByReqMethod") != null) {
+                        AutoSetResponse.AddRespHeaderByReqMethod(messageInfo);
+                    }
+                    //给没有后缀的图片URL添加响应头,便于过滤筛选
+                    if (AdvScopeUtils.getGuiConfigValue("AddRespHeaderByReqURL") != null) {
+                        AutoSetResponse.AddRespHeaderByReqUrl(messageInfo);
+                    }
+                    //给Json格式的请求的响应添加响应头,防止被Js过滤
+                    if (AdvScopeUtils.getGuiConfigValue("AddRespHeaderByRespHeader") != null) {
+                        AutoSetResponse.AddRespHeaderByRespHeader(messageInfo);
                     }
                 }
             }
