@@ -86,6 +86,8 @@ public class BurpExtender extends GUI implements IBurpExtender, IContextMenuFact
 
         //自动加载用户指定的 Project Json文件,如果不存在会自动保存当前配置
         AdvScopeUtils.autoLoadProjectConfig(callbacks);
+        //自动添加默认排除的域名列表
+        AdvScopeUtils.addDefaultExcludeHosts(callbacks);
         BurpExtender.stdout.println("Load Extension Success ...");
         }});
     }
