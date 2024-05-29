@@ -84,6 +84,9 @@ public class BurpExtender extends GUI implements IBurpExtender, IContextMenuFact
         callbacks.registerProxyListener(BurpExtender.this);
         callbacks.registerExtensionStateListener(BurpExtender.this);
 
+        //自动加载用户指定的 Project Json文件,如果不存在会自动保存当前配置
+        AdvScopeUtils.autoLoadProjectConfig(callbacks);
+        BurpExtender.stdout.println("Load Extension Success ...");
         }});
     }
 
