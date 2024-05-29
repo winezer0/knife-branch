@@ -77,8 +77,6 @@ public class BurpExtender extends GUI implements IBurpExtender, IContextMenuFact
         //各项数据初始化完成后在进行这些注册操作，避免插件加载时的空指针异常
         callbacks.setExtensionName(getFullExtensionName());
         callbacks.registerContextMenuFactory(BurpExtender.this);// for menus
-        callbacks.registerMessageEditorTabFactory(chntabFactory);// for Chinese
-        callbacks.registerMessageEditorTabFactory(infotabFactory);// for Chinese
         callbacks.addSuiteTab(BurpExtender.this);
         callbacks.registerHttpListener(BurpExtender.this);
         callbacks.registerProxyListener(BurpExtender.this);
@@ -88,6 +86,15 @@ public class BurpExtender extends GUI implements IBurpExtender, IContextMenuFact
         AdvScopeUtils.autoLoadProjectConfig(callbacks);
         //自动添加默认排除的域名列表
         AdvScopeUtils.addDefaultExcludeHosts(callbacks);
+
+        //动态添加 编码转换 面板
+        if (AdvScopeUtils.getGuiConfigValue("MsgChineseTab") != null) {
+            callbacks.registerMessageEditorTabFactory(chntabFactory);// for Chinese
+        }
+        //动态添加 敏感信息 面板
+        if (AdvScopeUtils.getGuiConfigValue("MsgInfoTab") != null) {
+            callbacks.registerMessageEditorTabFactory(infotabFactory);// for Information
+        }
         BurpExtender.stdout.println("Load Extension Success ...");
         }});
     }
