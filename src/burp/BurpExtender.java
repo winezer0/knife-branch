@@ -5,7 +5,6 @@ import java.io.PrintWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 import javax.swing.*;
@@ -138,14 +137,8 @@ public class BurpExtender extends GUI implements IBurpExtender, IContextMenuFact
             menu_item_list.add(updateHeader);
         }
 
-        //winzer0 添加 配置文件相关 //手动更新用户指定的 Project Json 文件
-        menu_item_list.add(new ProjectConfigLoadMenu(this));
-        menu_item_list.add(new ProjectConfigSaveMenu(this));
-        menu_item_list.add(new ProjectScopeClearMenu(this));
-        menu_item_list.add(new AddHostToInScopeMenu(this));
-        menu_item_list.add(new AddHostToInScopeAdvMenu(this));
-        menu_item_list.add(new AddHostToExScopeMenu(this));
-        menu_item_list.add(new AddHostToExScopeAdvMenu(this));
+        //添加自定义的菜单项
+        MenuItemsPlus.addMenuItems(menu_item_list, this);
 
         //扫描攻击相关
         menu_item_list.add(new AddHostToScopeMenu(this));
@@ -260,20 +253,7 @@ public class BurpExtender extends GUI implements IBurpExtender, IContextMenuFact
                 }
             } else {
                 // response 修改
-                if(true) {
-                    //给 Options 方法的响应 添加 Content-Type: application/octet-stream 用于过滤
-                    if (AdvScopeUtils.getGuiConfigValue("AddRespHeaderByReqMethod") != null) {
-                        AutoSetResponse.AddRespHeaderByReqMethod(messageInfo);
-                    }
-                    //给没有后缀的图片URL添加响应头,便于过滤筛选
-                    if (AdvScopeUtils.getGuiConfigValue("AddRespHeaderByReqURL") != null) {
-                        AutoSetResponse.AddRespHeaderByReqUrl(messageInfo);
-                    }
-                    //给Json格式的请求的响应添加响应头,防止被Js过滤
-                    if (AdvScopeUtils.getGuiConfigValue("AddRespHeaderByRespHeader") != null) {
-                        AutoSetResponse.AddRespHeaderByRespHeader(messageInfo);
-                    }
-                }
+                ProcessHttpMessagePlus.messageRespHandle(messageInfo);
             }
         } catch (Exception e) {
             e.printStackTrace();

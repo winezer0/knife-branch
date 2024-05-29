@@ -8,7 +8,23 @@ import com.bit4woo.utilbox.burp.HelperPlus;
 import java.util.HashMap;
 import java.util.List;
 
-public class AutoSetResponse {
+public class ProcessHttpMessagePlus {
+    public static void messageRespHandle(IHttpRequestResponse messageInfo) {
+        //给 Options 方法的响应 添加 Content-Type: application/octet-stream 用于过滤
+        if (AdvScopeUtils.getGuiConfigValue("AddRespHeaderByReqMethod") != null) {
+            ProcessHttpMessagePlus.AddRespHeaderByReqMethod(messageInfo);
+        }
+        //给没有后缀的图片URL添加响应头,便于过滤筛选
+        if (AdvScopeUtils.getGuiConfigValue("AddRespHeaderByReqURL") != null) {
+            ProcessHttpMessagePlus.AddRespHeaderByReqUrl(messageInfo);
+        }
+        //给Json格式的请求的响应添加响应头,防止被Js过滤
+        if (AdvScopeUtils.getGuiConfigValue("AddRespHeaderByRespHeader") != null) {
+            ProcessHttpMessagePlus.AddRespHeaderByRespHeader(messageInfo);
+        }
+    }
+
+
     public static void msgInfoSetResponse(IHttpRequestResponse messageInfo, String addRespHeaderLine) {
         //进行实际处理
         if(addRespHeaderLine != null){
