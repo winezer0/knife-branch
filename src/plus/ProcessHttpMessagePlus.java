@@ -5,6 +5,7 @@ import burp.IBurpExtenderCallbacks;
 import burp.IHttpRequestResponse;
 import com.bit4woo.utilbox.burp.HelperPlus;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 
@@ -37,8 +38,14 @@ public class ProcessHttpMessagePlus {
                 respHeaderValue = addRespHeaderLine.split(":", 2)[1].trim();
             }
             byte[] resp = helperPlus.addOrUpdateHeader(false, messageInfo.getResponse(), respHeaderName, respHeaderValue);
+
+            // 修改响应体为空, 防止程序根据响应内容设置MIME类型
+            if (AdvScopeUtils.getGuiConfigValue("AddRespHeaderSetBodyEmpty") != null) {
+                resp = helperPlus.UpdateBody(false, resp, "".getBytes(StandardCharsets.UTF_8));
+            }
+
             messageInfo.setResponse(resp);
-            messageInfo.setComment("Resp Add Header By Knife"); //在logger中没有显示comment
+            messageInfo.setComment("add resp header"); //在logger中没有显示comment
         }
     }
 
