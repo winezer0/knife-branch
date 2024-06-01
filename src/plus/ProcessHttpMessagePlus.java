@@ -10,18 +10,18 @@ import java.util.HashMap;
 import java.util.List;
 
 public class ProcessHttpMessagePlus {
-    public static void messageRespHandle(IHttpRequestResponse messageInfo) {
+    public static void messageRespHandleTraceless(IHttpRequestResponse messageInfo) {
         //给 Options 方法的响应 添加 Content-Type: application/octet-stream 用于过滤
         if (AdvScopeUtils.getGuiConfigValue("ModRespHeaderByReqMethod") != null) {
-            ModRespHeaderByReqMethod(messageInfo);
+            modRespHeaderByReqMethod(messageInfo);
         }
         //给没有后缀的图片URL添加响应头,便于过滤筛选
         if (AdvScopeUtils.getGuiConfigValue("ModRespHeaderByReqURL") != null) {
-            ModRespHeaderByReqUrl(messageInfo);
+            modRespHeaderByReqUrl(messageInfo);
         }
         //给Json格式的请求的响应添加响应头,防止被Js过滤
         if (AdvScopeUtils.getGuiConfigValue("ModRespHeaderByRespHeader") != null) {
-            ModRespHeaderByRespHeader(messageInfo);
+            modRespHeaderByRespHeader(messageInfo);
         }
     }
 
@@ -46,7 +46,7 @@ public class ProcessHttpMessagePlus {
         }
     }
 
-    private static void ModRespHeaderByReqMethod(IHttpRequestResponse messageInfo){
+    private static void modRespHeaderByReqMethod(IHttpRequestResponse messageInfo){
         IBurpExtenderCallbacks callbacks = BurpExtender.getCallbacks();
         HelperPlus helperPlus = new HelperPlus(callbacks.getHelpers());
         // 获取 请求方法
@@ -64,7 +64,7 @@ public class ProcessHttpMessagePlus {
         }
     }
 
-    private static void ModRespHeaderByReqUrl(IHttpRequestResponse messageInfo){
+    private static void modRespHeaderByReqUrl(IHttpRequestResponse messageInfo){
         IBurpExtenderCallbacks callbacks = BurpExtender.getCallbacks();
         HelperPlus helperPlus = new HelperPlus(callbacks.getHelpers());
         // 获取 请求URL
@@ -85,7 +85,7 @@ public class ProcessHttpMessagePlus {
         }
     }
 
-    private static void ModRespHeaderByRespHeader(IHttpRequestResponse messageInfo){
+    private static void modRespHeaderByRespHeader(IHttpRequestResponse messageInfo){
         IBurpExtenderCallbacks callbacks = BurpExtender.getCallbacks();
         HelperPlus helperPlus = new HelperPlus(callbacks.getHelpers());
         //获取对应的Json格式规则 // {"www.baidu.com":"Content-Type: application/octet-stream"}
