@@ -265,7 +265,9 @@ public class BurpExtender extends GUI implements IBurpExtender, IContextMenuFact
                 }
             } else {
                 // response 修改
-                ProcessHttpMessagePlus.messageRespHandle(messageInfo);
+                if (toolFlag == IBurpExtenderCallbacks.TOOL_PROXY) {
+                    ProcessHttpMessagePlus.messageRespHandle(messageInfo);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
