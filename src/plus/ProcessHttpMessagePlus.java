@@ -11,6 +11,10 @@ import java.util.List;
 
 public class ProcessHttpMessagePlus {
     public static void messageRespHandleTraceless(IHttpRequestResponse messageInfo) {
+        //删除指定响应头
+        if (AdvScopeUtils.getGuiConfigValue("RemoveRespHeader") != null) {
+            removeRespHeader(messageInfo);
+        }
         //给 Options 方法的响应 添加 Content-Type: application/octet-stream 用于过滤
         if (AdvScopeUtils.getGuiConfigValue("ModRespHeaderByReqMethod") != null) {
             modRespHeaderByReqMethod(messageInfo);
@@ -113,6 +117,28 @@ public class ProcessHttpMessagePlus {
         }
     }
 
+    private static void removeRespHeader(IHttpRequestResponse messageInfo){
+        // 删除无用的请求头信息
+        IBurpExtenderCallbacks callbacks = BurpExtender.getCallbacks();
+        HelperPlus helperPlus = new HelperPlus(callbacks.getHelpers());
+        //获取对应的格式规则 "Last-Modified,If-Modified-Since,If-None-Match"
+        String removeRespHeaderConfig = AdvScopeUtils.getGuiConfigValue("RemoveRespHeader");
+
+        if (removeRespHeaderConfig != null){
+            String[] headers = removeRespHeaderConfig.split(",");
+            if (headers.length > 0){
+                //循环删除响应头
+                byte[] resp = messageInfo.getResponse();
+                for (String header : headers) {
+                    resp = helperPlus.removeHeader(false, resp, header.trim());
+                }
+                messageInfo.setResponse(resp);
+                messageInfo.setComment("remove resp header"); //在logger中没有显示comment
+            }
+        }
+    }
+
+
     public static void messageReqHandleTraceless(IHttpRequestResponse messageInfo) {
         // 删除无用的请求头信息
         if (AdvScopeUtils.getGuiConfigValue("RemoveReqHeader") != null) {
@@ -130,8 +156,8 @@ public class ProcessHttpMessagePlus {
         if (removeReqHeaderConfig != null){
             String[] headers = removeReqHeaderConfig.split(",");
             if (headers.length > 0){
-                byte[] req = messageInfo.getRequest();
                 //循环删除请求头
+                byte[] req = messageInfo.getRequest();
                 for (String header : headers) {
                     req = helperPlus.removeHeader(true, req, header.trim());
                 }

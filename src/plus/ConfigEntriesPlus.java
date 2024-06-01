@@ -20,7 +20,9 @@ public class ConfigEntriesPlus {
         //自动化处理一些常用的属性
         configEntries.add(new ConfigEntry("RemoveReqHeader", "Last-Modified,If-Modified-Since,If-None-Match",ConfigEntry.Config_Basic_Variable,true,false,"无痕修改请求：删除指定的请求头"));
 
-        
+
+        configEntries.add(new ConfigEntry("RemoveRespHeader", "Last-Modified,If-Modified-Since,If-None-Match",ConfigEntry.Config_Basic_Variable,false,false,"无痕修改响应：删除指定的请求头"));
+
         configEntries.add(new ConfigEntry("ModRespHeaderByReqMethod", "{\"OPTIONS\":\"Content-Type: application/octet-stream\"}",ConfigEntry.Config_Basic_Variable,true,false,"无痕修改响应：方法名 基于请求方法添加|修改响应头"));
         configEntries.add(new ConfigEntry("ModRespHeaderSetBodyEmpty", "",ConfigEntry.Config_Basic_Variable,false,false,"无痕修改响应：基于请求方法添加|修改响应头时设置响应体为空"));
         configEntries.add(new ConfigEntry("ModRespHeaderByReqURL", "{\"picture\":\"Content-Type: application/octet-stream\"}",ConfigEntry.Config_Basic_Variable,false,false,"无痕修改响应：关键字|正则 基于请求URL添加|修改响应头"));
