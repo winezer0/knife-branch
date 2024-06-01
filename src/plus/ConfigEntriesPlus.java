@@ -22,9 +22,9 @@ public class ConfigEntriesPlus {
 
         
         configEntries.add(new ConfigEntry("ModRespHeaderByReqMethod", "{\"OPTIONS\":\"Content-Type: application/octet-stream\"}",ConfigEntry.Config_Basic_Variable,true,false,"无痕修改响应：方法名 基于请求方法添加|修改响应头"));
+        configEntries.add(new ConfigEntry("ModRespHeaderSetBodyEmpty", "",ConfigEntry.Config_Basic_Variable,false,false,"无痕修改响应：基于请求方法添加|修改响应头时设置响应体为空"));
         configEntries.add(new ConfigEntry("ModRespHeaderByReqURL", "{\"picture\":\"Content-Type: application/octet-stream\"}",ConfigEntry.Config_Basic_Variable,false,false,"无痕修改响应：关键字|正则 基于请求URL添加|修改响应头"));
         configEntries.add(new ConfigEntry("ModRespHeaderByRespHeader", "{\"application/json\":\"Content-Type: text/html;charset=utf-8\"}",ConfigEntry.Config_Basic_Variable,false,false,"无痕修改响应：关键字|正则 基于响应头添加|修改响应头"));
-        configEntries.add(new ConfigEntry("ModRespHeaderSetBodyEmpty", "",ConfigEntry.Config_Basic_Variable,false,false,"无痕修改响应：添加响应头同时设置响应体为空"));
     }
 
 }

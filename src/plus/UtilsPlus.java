@@ -248,6 +248,9 @@ public class UtilsPlus {
      * @return
      */
     public static HashMap<String, String> parseJsonRule2HashMap(String jsonConfig, boolean lowerCase) {
+        //忽略空字符串操作
+        if (jsonConfig == null || "".equals(jsonConfig)) return null;
+
         //转换Json对象
         HashMap<String, String> ruleHashMap;
         try {

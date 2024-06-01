@@ -25,27 +25,6 @@ public class ProcessHttpMessagePlus {
         }
     }
 
-    private static void msgInfoSetResponse(IHttpRequestResponse messageInfo, String ModRespHeaderLine) {
-        //进行实际处理
-        if(ModRespHeaderLine != null && ModRespHeaderLine.contains(":")) {
-            IBurpExtenderCallbacks callbacks = BurpExtender.getCallbacks();
-            HelperPlus helperPlus = new HelperPlus(callbacks.getHelpers());
-
-            String respHeaderName = ModRespHeaderLine.split(":", 2)[0].trim();
-            String respHeaderValue = ModRespHeaderLine.split(":", 2)[1].trim();
-
-            byte[] resp = helperPlus.addOrUpdateHeader(false, messageInfo.getResponse(), respHeaderName, respHeaderValue);
-
-            // 修改响应体为空, 防止程序根据响应内容设置MIME类型
-            if (AdvScopeUtils.getGuiConfigValue("ModRespHeaderSetBodyEmpty") != null) {
-                resp = helperPlus.UpdateBody(false, resp, "".getBytes(StandardCharsets.UTF_8));
-            }
-
-            messageInfo.setResponse(resp);
-            messageInfo.setComment("add resp header"); //在logger中没有显示comment
-        }
-    }
-
     private static void modRespHeaderByReqMethod(IHttpRequestResponse messageInfo){
         IBurpExtenderCallbacks callbacks = BurpExtender.getCallbacks();
         HelperPlus helperPlus = new HelperPlus(callbacks.getHelpers());
@@ -55,12 +34,26 @@ public class ProcessHttpMessagePlus {
         //获取对应的Json格式规则  {"OPTIONS":"Content-Type: application/octet-stream"}
         String ModRespHeaderConfig = AdvScopeUtils.getGuiConfigValue("ModRespHeaderByReqMethod");
         //解析Json格式的规则
-        HashMap<String, String> ModRespHeaderRuleMap = UtilsPlus.parseJsonRule2HashMap(ModRespHeaderConfig, true);
+        HashMap<String, String> modRespHeaderRuleMap = UtilsPlus.parseJsonRule2HashMap(ModRespHeaderConfig, true);
 
-        if(ModRespHeaderRuleMap != null && ModRespHeaderRuleMap.containsKey(curMethod)) {
+        if(modRespHeaderRuleMap != null && modRespHeaderRuleMap.containsKey(curMethod)) {
             //获取需要添加的响应头 每个方法只支持一种动作,更多的动作建议使用其他类型的修改方式
-            String ModRespHeaderLine = ModRespHeaderRuleMap.get(curMethod);
-            msgInfoSetResponse(messageInfo, ModRespHeaderLine);
+            String newRespHeaderLine = modRespHeaderRuleMap.get(curMethod);
+            //修改响应内容
+            byte[] resp = messageInfo.getResponse();
+            //添加响应头
+            if(newRespHeaderLine != null && newRespHeaderLine.contains(":")){
+                resp = helperPlus.addOrUpdateHeader(false, resp, newRespHeaderLine);
+            }
+
+            // 修改响应体为空, 防止程序根据响应内容设置MIME类型
+            if (AdvScopeUtils.getGuiConfigValue("ModRespHeaderSetBodyEmpty") != null){
+                resp = helperPlus.UpdateBody(false, resp, "".getBytes(StandardCharsets.UTF_8));
+            }
+
+            //设置新的内容
+            messageInfo.setResponse(resp);
+            messageInfo.setComment("modRespHeaderByReqMethod"); //在logger中没有显示comment
         }
     }
 
@@ -73,15 +66,21 @@ public class ProcessHttpMessagePlus {
         //获取对应的Json格式规则 // {"www.baidu.com":"Content-Type: application/octet-stream"}
         String ModRespHeaderConfig = AdvScopeUtils.getGuiConfigValue("ModRespHeaderByReqURL");
         //解析Json格式的规则
-        HashMap<String, String> ModRespHeaderRuleMap = UtilsPlus.parseJsonRule2HashMap(ModRespHeaderConfig, true);
+        HashMap<String, String> modRespHeaderRuleMap = UtilsPlus.parseJsonRule2HashMap(ModRespHeaderConfig, true);
 
-        if (ModRespHeaderRuleMap == null) return;
-
-        //循环 获取需要添加的响应头 并 设置响应头信息
-        for (String rule:ModRespHeaderRuleMap.keySet()) {
-            //获取需要添加的响应头 每个URL支持多种动作规则
-            String ModRespHeaderLine = UtilsPlus.getActionFromRuleMap(ModRespHeaderRuleMap, rule, curUrl);
-            msgInfoSetResponse(messageInfo, ModRespHeaderLine);
+        if (modRespHeaderRuleMap != null  && modRespHeaderRuleMap.size() > 0 ){
+            //循环 获取需要添加的响应头 并 设置响应头信息
+            byte[] resp = messageInfo.getResponse();
+            //添加响应头
+            for (String rule:modRespHeaderRuleMap.keySet()) {
+                //获取需要添加的响应头 每个URL支持多种动作规则
+                String newRespHeaderLine = UtilsPlus.getActionFromRuleMap(modRespHeaderRuleMap, rule, curUrl);
+                if(newRespHeaderLine != null && newRespHeaderLine.contains(":"))
+                    resp = helperPlus.addOrUpdateHeader(false, resp, newRespHeaderLine);
+            }
+            //设置新的内容
+            messageInfo.setResponse(resp);
+            messageInfo.setComment("modRespHeaderByReqUrl"); //在logger中没有显示comment
         }
     }
 
@@ -91,20 +90,26 @@ public class ProcessHttpMessagePlus {
         //获取对应的Json格式规则 // {"www.baidu.com":"Content-Type: application/octet-stream"}
         String ModRespHeaderConfig = AdvScopeUtils.getGuiConfigValue("ModRespHeaderByRespHeader");
         //解析Json格式的规则
-        HashMap<String, String> ModRespHeaderRuleMap = UtilsPlus.parseJsonRule2HashMap(ModRespHeaderConfig,false);
-        if (ModRespHeaderRuleMap == null) return;
-
-        //获取响应头
-        List<String> responseHeaders = helperPlus.getHeaderList(false, messageInfo);
-        for (String rule:ModRespHeaderRuleMap.keySet()) {
-            for (String responseHeader:responseHeaders){
-                //获取需要添加的响应头 每个规则只处理一种响应头，支持多种动作规则
-                String ModRespHeaderLine = UtilsPlus.getActionFromRuleMap(ModRespHeaderRuleMap, rule, responseHeader);
-                if(ModRespHeaderLine!=null){
-                    msgInfoSetResponse(messageInfo, ModRespHeaderLine);
-                    break; 	//匹配成功后就进行下一条规则的匹配
+        HashMap<String, String> modRespHeaderRuleMap = UtilsPlus.parseJsonRule2HashMap(ModRespHeaderConfig,false);
+        //进行规则处理
+        if (modRespHeaderRuleMap != null && modRespHeaderRuleMap.size() > 0){
+            //获取响应头
+            List<String> responseHeaders = helperPlus.getHeaderList(false, messageInfo);
+            byte[] resp = messageInfo.getResponse();
+            //添加响应头
+            for (String rule:modRespHeaderRuleMap.keySet()) {
+                for (String responseHeader:responseHeaders){
+                    //获取需要添加的响应头 每个规则只处理一种响应头，支持多种动作规则
+                    String newRespHeaderLine = UtilsPlus.getActionFromRuleMap(modRespHeaderRuleMap, rule, responseHeader);
+                    if(newRespHeaderLine != null && newRespHeaderLine.contains(":")){
+                        resp = helperPlus.addOrUpdateHeader(false, resp, newRespHeaderLine);
+                        break; 	//匹配成功后就进行下一条规则的匹配
+                    }
                 }
             }
+            //设置新的内容
+            messageInfo.setResponse(resp);
+            messageInfo.setComment("modRespHeaderByRespHeader"); //在logger中没有显示comment
         }
     }
 
