@@ -127,10 +127,11 @@ public class ProcessHttpMessagePlus {
         //获取对应的格式规则 "Last-Modified,If-Modified-Since,If-None-Match"
         String removeReqHeaderConfig = AdvScopeUtils.getGuiConfigValue("RemoveReqHeader");
 
-        if (null != removeReqHeaderConfig && "" != removeReqHeaderConfig.trim()){
+        if (removeReqHeaderConfig != null){
             String[] headers = removeReqHeaderConfig.split(",");
             if (headers.length > 0){
                 byte[] req = messageInfo.getRequest();
+                //循环删除请求头
                 for (String header : headers) {
                     req = helperPlus.removeHeader(true, req, header.trim());
                 }
