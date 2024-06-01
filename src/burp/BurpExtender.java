@@ -248,6 +248,7 @@ public class BurpExtender extends GUI implements IBurpExtender, IContextMenuFact
             if (messageIsRequest) {
                 //add/update/append header
                 if (toolFlag == IBurpExtenderCallbacks.TOOL_PROXY) {
+                    ProcessHttpMessagePlus.messageReqHandleTraceless(messageInfo);
                     //##############################//
                     //handle it in processProxyMessage(). so we can see the changes in the proxy view.
                     //##############################//

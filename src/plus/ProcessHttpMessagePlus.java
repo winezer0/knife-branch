@@ -107,4 +107,32 @@ public class ProcessHttpMessagePlus {
             }
         }
     }
+
+    public static void messageReqHandleTraceless(IHttpRequestResponse messageInfo) {
+        // 删除无用的请求头信息
+        if (AdvScopeUtils.getGuiConfigValue("RemoveReqHeader") != null) {
+            removeReqHeader(messageInfo);
+        }
+    }
+
+    private static void removeReqHeader(IHttpRequestResponse messageInfo){
+        // 删除无用的请求头信息
+        IBurpExtenderCallbacks callbacks = BurpExtender.getCallbacks();
+        HelperPlus helperPlus = new HelperPlus(callbacks.getHelpers());
+        //获取对应的格式规则 "Last-Modified,If-Modified-Since,If-None-Match"
+        String removeReqHeaderConfig = AdvScopeUtils.getGuiConfigValue("RemoveReqHeader");
+
+        if (null != removeReqHeaderConfig && "" != removeReqHeaderConfig.trim()){
+            String[] headers = removeReqHeaderConfig.split(",");
+            if (headers.length > 0){
+                byte[] req = messageInfo.getRequest();
+                for (String header : headers) {
+                    req = helperPlus.removeHeader(true, req, header.trim());
+                }
+                messageInfo.setRequest(req);
+                messageInfo.setComment("remove req header"); //在logger中没有显示comment
+            }
+        }
+    }
+
 }
