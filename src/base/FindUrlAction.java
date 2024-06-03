@@ -18,19 +18,13 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.JOptionPane;
 
+import burp.*;
 import org.apache.commons.lang3.StringUtils;
 
 import com.bit4woo.utilbox.burp.HelperPlus;
 import com.bit4woo.utilbox.utils.SwingUtils;
 import com.bit4woo.utilbox.utils.TextUtils;
 import com.bit4woo.utilbox.utils.UrlUtils;
-
-import burp.BurpExtender;
-import burp.IBurpExtenderCallbacks;
-import burp.IContextMenuInvocation;
-import burp.IExtensionHelpers;
-import burp.IHttpRequestResponse;
-import burp.threadRequester;
 
 public class FindUrlAction implements ActionListener {
 	private IContextMenuInvocation invocation;
@@ -41,8 +35,8 @@ public class FindUrlAction implements ActionListener {
 	public BurpExtender burp;
 
 	public static final String[] blackHostList = {"www.w3.org", "ns.adobe.com", "iptc.org", "openoffice.org"
-			, "schemas.microsoft.com", "schemas.openxmlformats.org", "sheetjs.openxmlformats.org","registry.npmjs.org"
-			,"json-schema.org","jmespath.org"};
+			, "schemas.microsoft.com", "schemas.openxmlformats.org", "sheetjs.openxmlformats.org", "registry.npmjs.org"
+			, "json-schema.org", "jmespath.org"};
 
 	public static final List<String> blackPath = TextUtils.textToLines("text/css\r\n"
 			+ "	text/html\r\n"
@@ -50,25 +44,18 @@ public class FindUrlAction implements ActionListener {
 			+ "	image/pdf\r\n");
 
 
-	private static Proxy proxy;
-	public static Map<String,String> BaseUrlMap = new HashMap<>();
+	public static Proxy CurrentProxy;
+	public static HashMap<String, String> httpServiceBaseUrlMap = new HashMap<>();
 
 	public FindUrlAction(BurpExtender burp, IContextMenuInvocation invocation) {
 		this.burp = burp;
 		this.invocation = invocation;
-		this.helpers = burp.helpers;
-		this.callbacks = BurpExtender.callbacks;
-		this.stderr = BurpExtender.stderr;
-		this.stdout = BurpExtender.stdout;
-	}
-
-	public FindUrlAction() {
 		this.helpers = BurpExtender.helpers;
-
+		this.callbacks = BurpExtender.callbacks;
 	}
 
 
-	public void doSendRequest(String baseurl,List<String> urlPath,String refererToUse) {
+	public static void doSendRequest(String baseurl, List<String> urlPath, String refererToUse) {
 		try {
 			BlockingQueue<RequestTask> inputQueue = new LinkedBlockingQueue<>();
 
@@ -83,8 +70,13 @@ public class FindUrlAction implements ActionListener {
 						}
 						url = baseurl + url; //baseurl统一以“/”结尾；url统一删除“/”的开头
 						inputQueue.put(new RequestTask(url, RequestType.GET));
-						inputQueue.put(new RequestTask(url, RequestType.POST));
-						inputQueue.put(new RequestTask(url, RequestType.JSON));
+
+						if (url.toLowerCase().endsWith(".js") || url.toLowerCase().endsWith(".html")) {
+							//不严谨，TODO应该判断path
+						} else {
+							inputQueue.put(new RequestTask(url, RequestType.POST));
+							inputQueue.put(new RequestTask(url, RequestType.JSON));
+						}
 					}
 				}
 			} catch (Exception e) {
@@ -93,7 +85,7 @@ public class FindUrlAction implements ActionListener {
 
 			doRequest(inputQueue, refererToUse);
 		} catch (Exception e1) {
-			e1.printStackTrace(stderr);
+			e1.printStackTrace(BurpExtender.getStderr());
 		}
 	}
 
@@ -103,29 +95,25 @@ public class FindUrlAction implements ActionListener {
 			@Override
 			public void run() {
 				IHttpRequestResponse[] messages = invocation.getSelectedMessages();
-				if (messages == null || messages.length <= 0) {
+				if (messages == null || messages.length == 0) {
 					return;
 				}
 				String targetBaseUrl = getTargetSiteBaseUrl(messages[0]);
 
-				List<String> urls = FindAllUrls(messages[0]);
+				List<String> urls = FindAllUrlsOfTarget(targetBaseUrl);
 
-				Set<String> baseUrls = findPossibleBaseURL(urls);
-
-				if (baseUrls.size() <= 0) {
-					return;
-				}
-
-				String baseurl = choseAndEditBaseURL(baseUrls);
+				String baseurl = choseAndEditBaseURL(urls);
 
 				if (null == baseurl) {
 					return;
 				}
 
-				urls = choseURLPath(urls);
-				if (urls.size()<=0) return; 
+				httpServiceBaseUrlMap.put(targetBaseUrl, baseurl);
 
-				doSendRequest(baseurl,urls,targetBaseUrl);
+				urls = choseURLPath(urls);
+				if (urls.size() == 0) return;
+
+				doSendRequest(baseurl, urls, targetBaseUrl);
 			}
 		};
 		new Thread(requestRunner).start();
@@ -133,44 +121,84 @@ public class FindUrlAction implements ActionListener {
 
 	/**
 	 * 根据当前web的baseUrl找JS，特征就是referer以它开头
-	 * @param message
+	 *
 	 * @return
 	 */
-	public static List<String> FindAllUrls(IHttpRequestResponse message) {
-		String targetBaseUrl = getTargetSiteBaseUrl(message);
+	public static List<String> FindAllUrlsOfTarget(IHttpService httpService, byte[] request, byte[] response) {
+		String targetBaseUrl = getTargetSiteBaseUrl(httpService, request);
+		return FindAllUrlsOfTarget(targetBaseUrl);
+	}
 
-		List<String> urls = findUrls(message.getResponse());
+
+	public static List<String> FindAllUrlsOfTarget(String targetBaseUrl) {
+		List<String> urls = new ArrayList<>();
+		urls.add(targetBaseUrl);
+		//List<String> urls = findUrls(response);
+		//siteMap中应该也会包含这个请求的
 
 		HelperPlus getter = BurpExtender.getHelperPlus();
 		IHttpRequestResponse[] messages = BurpExtender.getCallbacks().getSiteMap(null);
 		for (IHttpRequestResponse item : messages) {
-			URL url = getter.getFullURL(item);
-			if (url == null || (!url.toString().toLowerCase().endsWith(".js") && !url.toString().toLowerCase().endsWith(".js.map"))) {
+			if (item == null || item.getResponse() == null) {
 				continue;
 			}
-
 			int code = getter.getStatusCode(item);
-			String referUrl = getter.getHeaderValueOf(true, item, "Referer");
-			if (referUrl == null || code <= 0) {
+			if (code != 200) {
 				continue;
 			}
 
-			if (referUrl.toLowerCase().startsWith(targetBaseUrl.toLowerCase())) {
-				urls.addAll(findUrls(item.getResponse()));
+			URL url = getter.getFullURL(item);
+			if (url == null) {
+				continue;
+			}
+
+			String referUrl = getter.getHeaderValueOf(true, item, "Referer");
+			//JS请求必然有referer，js.map请求则没有referer，首页的.html请求也没有
+			if (url.toString().toLowerCase().endsWith(".js")) {
+				if (referUrl == null) {
+					continue;
+				}
+				if (referUrl.toLowerCase().startsWith(targetBaseUrl.toLowerCase())) {
+					urls.addAll(findUrls(item.getResponse()));
+				}
+			}
+			//没必要处理js.map。
+			if (url.toString().toLowerCase().endsWith(".js.map")) {
+
+			}
+
+			if (!url.toString().toLowerCase().endsWith(".html")) {
+				if (referUrl == null) {
+					if (url.toString().toLowerCase().startsWith(targetBaseUrl.toLowerCase())) {
+						urls.addAll(findUrls(item.getResponse()));
+					}
+				} else {
+					if (referUrl.toLowerCase().startsWith(targetBaseUrl.toLowerCase())) {
+						urls.addAll(findUrls(item.getResponse()));
+					}
+				}
 			}
 		}
 		return urls;
 	}
 
+
 	/**
+	 * 一个数据包，确定它的【来源】
+	 *
 	 * @param message
 	 * @return
 	 */
 	public static String getTargetSiteBaseUrl(IHttpRequestResponse message) {
+		return getTargetSiteBaseUrl(message.getHttpService(), message.getRequest());
+	}
+
+
+	public static String getTargetSiteBaseUrl(IHttpService httpService, byte[] request) {
 		HelperPlus getter = BurpExtender.getHelperPlus();
 
-		String current_referUrl = getter.getHeaderValueOf(true, message, "Referer");
-		String current_fullUrl = getter.getFullURL(message).toString();
+		String current_referUrl = getter.getHeaderValueOf(true, request, "Referer");
+		String current_fullUrl = getter.getFullURL(httpService, request).toString();
 
 		if (current_referUrl != null) {
 			//认为当前数据包是前端触发的
@@ -181,18 +209,20 @@ public class FindUrlAction implements ActionListener {
 		}
 	}
 
+
 	public static List<String> findUrls(byte[] content) {
 		List<String> urls = new ArrayList<>();
 
 		if (content == null) {
 			return urls;
-		}else {
+		} else {
 			return findUrls(new String(content));
 		}
 	}
 
 	/**
 	 * 在数据包中查找URL
+	 *
 	 * @param content
 	 * @return
 	 */
@@ -216,18 +246,18 @@ public class FindUrlAction implements ActionListener {
 	 *
 	 * @param inputQueue
 	 */
-	public void doRequest(BlockingQueue<RequestTask> inputQueue, String referUrl) {
-		if (proxy == null) {
-			proxy = Proxy.inputProxy();
+	public static void doRequest(BlockingQueue<RequestTask> inputQueue, String referUrl) {
+		if (CurrentProxy == null) {
+			CurrentProxy = Proxy.inputProxy();
 		}
-		if (proxy == null) {
+		if (CurrentProxy == null) {
 			return;
 		}
 
 		int max = threadNumberShouldUse(inputQueue.size());
 
 		for (int i = 0; i <= max; i++) {
-			threadRequester requester = new threadRequester(inputQueue, proxy.getHost(), proxy.getPort(), referUrl, i);
+			threadRequester requester = new threadRequester(inputQueue, CurrentProxy.getHost(), CurrentProxy.getPort(), referUrl, i);
 			requester.start();
 		}
 	}
@@ -251,30 +281,31 @@ public class FindUrlAction implements ActionListener {
 		}
 	}
 
-	public static Set<String> findPossibleBaseURL(List<String> urls) {
-		Set<String> baseURLs = new HashSet<>();
+	public static List<String> findPossibleBaseURL(List<String> urls) {
+		List<String> baseURLs = new ArrayList<>();
 		for (String tmpurl : urls) {
 			//这部分提取的是含有协议头的完整URL地址
 			if (tmpurl.toLowerCase().startsWith("http://")
 					|| tmpurl.toLowerCase().startsWith("https://")) {
-
-				baseURLs.add(tmpurl);
+				if (!baseURLs.contains(tmpurl)) {
+					baseURLs.add(tmpurl);
+				}
 			}
 		}
 		return baseURLs;
 	}
 
 
+	public static String choseAndEditBaseURL(List<String> inputs) {
 
-	public static String choseAndEditBaseURL(Set<String> inputs) {
+		Collections.sort(inputs);
+		inputs = findPossibleBaseURL(inputs);
 
-		ArrayList<String> tmpList = new ArrayList<String>(inputs);
-		Collections.sort(tmpList);
 		int n = inputs.size() + 1;
 		String[] possibleValues = new String[n];
 
 		// Copying contents of domains to arr[]
-		System.arraycopy(tmpList.toArray(), 0, possibleValues, 0, n - 1);
+		System.arraycopy(inputs.toArray(), 0, possibleValues, 0, n - 1);
 		possibleValues[n - 1] = "Let Me Input";
 
 		String selectedValue = (String) JOptionPane.showInputDialog(null,
@@ -302,7 +333,7 @@ public class FindUrlAction implements ActionListener {
 		String text = SwingUtils.showTextAreaDialog(String.join(System.lineSeparator(), urls));
 		if (StringUtils.isEmpty(text)) {
 			return new ArrayList<String>();
-		}else {
+		} else {
 			return TextUtils.textToLines(text);
 		}
 	}
@@ -311,7 +342,7 @@ public class FindUrlAction implements ActionListener {
 	public static List<String> cleanUrls(List<String> urls) {
 
 		urls = TextUtils.deduplicate(urls);
-		Iterator<String> it  = urls.iterator();
+		Iterator<String> it = urls.iterator();
 		while (it.hasNext()) {
 			String urlItem = it.next();
 			if (UrlUtils.uselessExtension(urlItem)) {
