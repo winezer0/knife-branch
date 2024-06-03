@@ -14,7 +14,7 @@ public class ConfigEntriesPlus {
         configEntries.add(new ConfigEntry("Scope_Base_On_SubDomain", "",ConfigEntry.Config_Basic_Variable,true,false,"高级配置：设置Scope时基于子域名操作"));
         configEntries.add(new ConfigEntry("Auto_Save_Scope_Update", "",ConfigEntry.Config_Basic_Variable,true,false,"高级配置：自动保存Scope更新到项目配置"));
         //默认不添加到scope的域名 //需要优化,不能每次都添加
-        String defaultExcludeHosts = ".*\\.baidu\\.com,.*\\.bdstatic\\.com,.*\\.msn\\.cn,.*\\.microsoft\\.com,.*\\.bing\\.com,.*\\.google\\.com,.*\\.firefox\\.com";
+        String defaultExcludeHosts = ".*\\.alicdn\\..*,.*\\.aliyun\\..*,.*\\.baidu\\..*,.*\\.bdstatic\\..*,.*\\.bing\\..*,.*\\.feishu\\..*,.*\\.firefox\\..*,.*\\.google\\..*,.*\\.gstatic\\..*,.*\\.microsoft\\..*,.*\\.mozilla\\..*,.*\\.msftconnecttest\\..*,.*\\.msn\\..*";
         configEntries.add(new ConfigEntry("Add_Exclude_Scope_Hosts",defaultExcludeHosts,ConfigEntry.Config_Basic_Variable,false,false,"高级配置：将目标正则追加到排除Scope"));
 
         //自动化处理一些常用的属性
