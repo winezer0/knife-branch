@@ -2,7 +2,6 @@ package messageTab.Info;
 
 import java.awt.Component;
 import java.util.List;
-import java.util.Set;
 
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
@@ -10,16 +9,13 @@ import javax.swing.SwingWorker;
 import com.bit4woo.utilbox.utils.ByteArrayUtils;
 import com.bit4woo.utilbox.utils.EmailUtils;
 import com.bit4woo.utilbox.utils.TextUtils;
-import com.bit4woo.utilbox.utils.UrlUtils;
 
-import base.FindUrl_Action;
+import base.FindUrlAction;
 import burp.BurpExtender;
 import burp.IBurpExtenderCallbacks;
 import burp.IExtensionHelpers;
-import burp.IHttpRequestResponse;
 import burp.IMessageEditorController;
 import burp.IMessageEditorTab;
-import knife.FindUrlAndRequest;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -96,7 +92,7 @@ public class InfoTab implements IMessageEditorTab {
                 @Override
                 protected Void doInBackground() throws Exception {
                 	
-                	List<String> urls = FindUrl_Action.findUrls(content);
+                	List<String> urls = FindUrlAction.findUrls(content);
 
                     for (String url : urls) {
                         InfoEntry aaa = new InfoEntry(url, InfoEntry.Type_URL);

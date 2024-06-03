@@ -32,7 +32,7 @@ import burp.IExtensionHelpers;
 import burp.IHttpRequestResponse;
 import burp.threadRequester;
 
-public class FindUrl_Action implements ActionListener {
+public class FindUrlAction implements ActionListener {
 	private IContextMenuInvocation invocation;
 	public IExtensionHelpers helpers;
 	public PrintWriter stdout;
@@ -53,7 +53,7 @@ public class FindUrl_Action implements ActionListener {
 	private static Proxy proxy;
 	public static Map<String,String> BaseUrlMap = new HashMap<>();
 
-	public FindUrl_Action(BurpExtender burp, IContextMenuInvocation invocation) {
+	public FindUrlAction(BurpExtender burp, IContextMenuInvocation invocation) {
 		this.burp = burp;
 		this.invocation = invocation;
 		this.helpers = burp.helpers;
@@ -62,7 +62,7 @@ public class FindUrl_Action implements ActionListener {
 		this.stdout = BurpExtender.stdout;
 	}
 
-	public FindUrl_Action() {
+	public FindUrlAction() {
 		this.helpers = BurpExtender.helpers;
 
 	}
