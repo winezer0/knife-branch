@@ -5,26 +5,31 @@ import java.awt.event.ActionListener;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.JOptionPane;
 
-import burp.*;
 import org.apache.commons.lang3.StringUtils;
 
 import com.bit4woo.utilbox.burp.HelperPlus;
 import com.bit4woo.utilbox.utils.SwingUtils;
 import com.bit4woo.utilbox.utils.TextUtils;
 import com.bit4woo.utilbox.utils.UrlUtils;
+
+import burp.BurpExtender;
+import burp.IBurpExtenderCallbacks;
+import burp.IContextMenuInvocation;
+import burp.IExtensionHelpers;
+import burp.IHttpRequestResponse;
+import burp.IHttpService;
+import burp.threadRequester;
+import org.apache.tika.mime.MediaType;
+import org.apache.tika.mime.MimeTypes;
 
 public class FindUrlAction implements ActionListener {
 	private IContextMenuInvocation invocation;
@@ -34,15 +39,18 @@ public class FindUrlAction implements ActionListener {
 	public IBurpExtenderCallbacks callbacks;
 	public BurpExtender burp;
 
-	public static final String[] blackHostList = {"www.w3.org", "ns.adobe.com", "iptc.org", "openoffice.org"
-			, "schemas.microsoft.com", "schemas.openxmlformats.org", "sheetjs.openxmlformats.org", "registry.npmjs.org"
-			, "json-schema.org", "jmespath.org"};
+	public static final List<String> blackHostList = TextUtils.textToLines("ns.adobe.com\r\n"
+			+ "schemas.microsoft.com\r\n"
+			+ "iptc.org\r\n"
+			+ "jmespath.org\r\n"
+			+ "json-schema.org\r\n"
+			+ "registry.npmjs.org\r\n"
+			+ "openoffice.org\r\n"
+			+ "schemas.openxmlformats.org\r\n"
+			+ "sheetjs.openxmlformats.org\r\n"
+			+ "www.w3.org");
 
-	public static final List<String> blackPath = TextUtils.textToLines("text/css\r\n"
-			+ "	text/html\r\n"
-			+ "	text/plain\r\n"
-			+ "	image/pdf\r\n");
-
+	public static final List<String> blackPath = MimeTypesList.genMIMETypeListAsPathBlackList();
 
 	public static Proxy CurrentProxy;
 	public static HashMap<String, String> httpServiceBaseUrlMap = new HashMap<>();
@@ -54,36 +62,51 @@ public class FindUrlAction implements ActionListener {
 		this.callbacks = BurpExtender.callbacks;
 	}
 
+	public static List<String> buildUrls(String baseurl, List<String> urlPath){
+		List<String> result = new ArrayList<>();
 
-	public static void doSendRequest(String baseurl, List<String> urlPath, String refererToUse) {
+		for (String url : urlPath) {
+			if (StringUtils.isBlank(baseurl)) {
+				continue;
+			}
+			if (url.toLowerCase().startsWith("http://") || url.toLowerCase().startsWith("https://")) {
+				result.add(url);
+				continue;
+			}
+			
+			if (url.startsWith("/")) {
+				url = url.replaceFirst("/", "");
+			}
+			if (url.startsWith("./")) {
+				url = url.replaceFirst("\\./", "");
+			}
+			url = baseurl + url; //baseurl统一以“/”结尾；url统一删除“/”的开头
+			result.add(url);
+		}
+		return result;
+	}
+
+	public static void doSendRequest(List<String> full_urls, String refererToUse) {
 		try {
 			BlockingQueue<RequestTask> inputQueue = new LinkedBlockingQueue<>();
 
 			try {
-				for (String url : urlPath) {
-					if (!url.startsWith("http://") && !url.startsWith("https://")) {
-						if (url.startsWith("/")) {
-							url = url.replaceFirst("/", "");
-						}
-						if (url.startsWith("./")) {
-							url = url.replaceFirst("\\./", "");
-						}
-						url = baseurl + url; //baseurl统一以“/”结尾；url统一删除“/”的开头
-						inputQueue.put(new RequestTask(url, RequestType.GET));
+				for (String url : full_urls) {
+					inputQueue.put(new RequestTask(url, RequestType.GET));
 
-						if (url.toLowerCase().endsWith(".js") || url.toLowerCase().endsWith(".html")) {
-							//不严谨，TODO应该判断path
-						} else {
-							inputQueue.put(new RequestTask(url, RequestType.POST));
-							inputQueue.put(new RequestTask(url, RequestType.JSON));
-						}
+					if (url.toLowerCase().endsWith(".js") || url.toLowerCase().endsWith(".html")) {
+						//不严谨，TODO应该判断path
+					} else {
+						inputQueue.put(new RequestTask(url, RequestType.POST));
+						inputQueue.put(new RequestTask(url, RequestType.JSON));
 					}
 				}
 			} catch (Exception e) {
 				e.printStackTrace(BurpExtender.getStderr());
 			}
-
-			doRequest(inputQueue, refererToUse);
+			HashMap<String, String> headers = new HashMap<String,String>();
+			headers.put("Referer", refererToUse);
+			doRequest(inputQueue, headers);
 		} catch (Exception e1) {
 			e1.printStackTrace(BurpExtender.getStderr());
 		}
@@ -98,9 +121,9 @@ public class FindUrlAction implements ActionListener {
 				if (messages == null || messages.length == 0) {
 					return;
 				}
-				String targetBaseUrl = getTargetSiteBaseUrl(messages[0]);
+				String originUrl = getOriginUrlOfMessage(messages[0]);
 
-				List<String> urls = FindAllUrlsOfTarget(targetBaseUrl);
+				List<String> urls = FindAllUrlsOfTarget(originUrl);
 
 				String baseurl = choseAndEditBaseURL(urls);
 
@@ -108,33 +131,31 @@ public class FindUrlAction implements ActionListener {
 					return;
 				}
 
-				httpServiceBaseUrlMap.put(targetBaseUrl, baseurl);
+				httpServiceBaseUrlMap.put(originUrl, baseurl);
 
 				urls = choseURLPath(urls);
 				if (urls.size() == 0) return;
-
-				doSendRequest(baseurl, urls, targetBaseUrl);
+				List<String> full_urls = buildUrls(baseurl, urls);
+				doSendRequest(full_urls, originUrl);
 			}
 		};
 		new Thread(requestRunner).start();
 	}
 
 	/**
-	 * 根据当前web的baseUrl找JS，特征就是referer以它开头
+	 * 
+	 * 根据当前web的originUrl找JS，特征就是referer以它开头
 	 *
 	 * @return
 	 */
 	public static List<String> FindAllUrlsOfTarget(IHttpService httpService, byte[] request, byte[] response) {
-		String targetBaseUrl = getTargetSiteBaseUrl(httpService, request);
-		return FindAllUrlsOfTarget(targetBaseUrl);
+		String originUrl = getOriginUrlOfMessage(httpService, request);
+		return FindAllUrlsOfTarget(originUrl);
 	}
 
 
-	public static List<String> FindAllUrlsOfTarget(String targetBaseUrl) {
+	public static List<String> FindAllUrlsOfTarget(String originUrl) {
 		List<String> urls = new ArrayList<>();
-		urls.add(targetBaseUrl);
-		//List<String> urls = findUrls(response);
-		//siteMap中应该也会包含这个请求的
 
 		HelperPlus getter = BurpExtender.getHelperPlus();
 		IHttpRequestResponse[] messages = BurpExtender.getCallbacks().getSiteMap(null);
@@ -158,7 +179,7 @@ public class FindUrlAction implements ActionListener {
 				if (referUrl == null) {
 					continue;
 				}
-				if (referUrl.toLowerCase().startsWith(targetBaseUrl.toLowerCase())) {
+				if (referUrl.toLowerCase().startsWith(originUrl.toLowerCase())) {
 					urls.addAll(findUrls(item.getResponse()));
 				}
 			}
@@ -169,16 +190,19 @@ public class FindUrlAction implements ActionListener {
 
 			if (!url.toString().toLowerCase().endsWith(".html")) {
 				if (referUrl == null) {
-					if (url.toString().toLowerCase().startsWith(targetBaseUrl.toLowerCase())) {
+					if (url.toString().toLowerCase().startsWith(originUrl.toLowerCase())) {
 						urls.addAll(findUrls(item.getResponse()));
 					}
 				} else {
-					if (referUrl.toLowerCase().startsWith(targetBaseUrl.toLowerCase())) {
+					if (referUrl.toLowerCase().startsWith(originUrl.toLowerCase())) {
 						urls.addAll(findUrls(item.getResponse()));
 					}
 				}
 			}
 		}
+		
+		Collections.sort(urls);
+		urls.add(0,originUrl);//把orginUrl放在最前面，它是baseUrl的概率比较高
 		return urls;
 	}
 
@@ -189,12 +213,18 @@ public class FindUrlAction implements ActionListener {
 	 * @param message
 	 * @return
 	 */
-	public static String getTargetSiteBaseUrl(IHttpRequestResponse message) {
-		return getTargetSiteBaseUrl(message.getHttpService(), message.getRequest());
+	public static String getOriginUrlOfMessage(IHttpRequestResponse message) {
+		return getOriginUrlOfMessage(message.getHttpService(), message.getRequest());
 	}
 
-
-	public static String getTargetSiteBaseUrl(IHttpService httpService, byte[] request) {
+	/**
+	 * 
+	 * 获取当前数据包的来源URL(OriginUrl),和请求包中的origin header是一个概念
+	 * @param httpService
+	 * @param request
+	 * @return
+	 */
+	public static String getOriginUrlOfMessage(IHttpService httpService, byte[] request) {
 		HelperPlus getter = BurpExtender.getHelperPlus();
 
 		String current_referUrl = getter.getHeaderValueOf(true, request, "Referer");
@@ -246,7 +276,7 @@ public class FindUrlAction implements ActionListener {
 	 *
 	 * @param inputQueue
 	 */
-	public static void doRequest(BlockingQueue<RequestTask> inputQueue, String referUrl) {
+	public static void doRequest(BlockingQueue<RequestTask> inputQueue, HashMap<String,String> headers) {
 		if (CurrentProxy == null) {
 			CurrentProxy = Proxy.inputProxy();
 		}
@@ -257,7 +287,7 @@ public class FindUrlAction implements ActionListener {
 		int max = threadNumberShouldUse(inputQueue.size());
 
 		for (int i = 0; i <= max; i++) {
-			threadRequester requester = new threadRequester(inputQueue, CurrentProxy.getHost(), CurrentProxy.getPort(), referUrl, i);
+			threadRequester requester = new threadRequester(inputQueue, CurrentProxy.getHost(), CurrentProxy.getPort(), headers, i);
 			requester.start();
 		}
 	}
@@ -292,13 +322,12 @@ public class FindUrlAction implements ActionListener {
 				}
 			}
 		}
+		Collections.sort(baseURLs);
 		return baseURLs;
 	}
 
 
 	public static String choseAndEditBaseURL(List<String> inputs) {
-
-		Collections.sort(inputs);
 		inputs = findPossibleBaseURL(inputs);
 
 		int n = inputs.size() + 1;
@@ -348,12 +377,12 @@ public class FindUrlAction implements ActionListener {
 			if (UrlUtils.uselessExtension(urlItem)) {
 				it.remove();
 			}
-			if (blackPath.contains(urlItem)) {
+			if (TextUtils.containsAny(urlItem, blackPath, false)) {
 				it.remove();
 			}
 			try {
 				String host = new URL(urlItem).getHost();
-				if (Arrays.asList(blackHostList).contains(host)) {
+				if (blackHostList.contains(host)) {
 					it.remove();
 				}
 			} catch (Exception E) {
