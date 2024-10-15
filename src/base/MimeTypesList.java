@@ -43,8 +43,8 @@ public class MimeTypesList {
         		subTypeStr = subTypeStr.substring(0,subTypeStr.indexOf("+")+1);
         	}
         	
-            String item  =typeStr+"/"+subTypeStr;
-            System.out.println(item);
+            String item = typeStr+"/"+subTypeStr;
+            //System.out.println(item);
             
             if (!result.contains(item)) {
             	result.add(item);
