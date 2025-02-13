@@ -18,15 +18,15 @@ public class ConfigEntriesPlus {
         configEntries.add(new ConfigEntry("Add_Exclude_Scope_Hosts",defaultExcludeHosts,ConfigEntry.Config_Basic_Variable,false,false,"高级配置：将目标正则追加到排除Scope"));
 
         //自动化处理一些常用的属性
-        configEntries.add(new ConfigEntry("RemoveReqHeader", "Last-Modified,If-Modified-Since,If-None-Match",ConfigEntry.Config_Basic_Variable,true,false,"无痕修改请求：删除指定的请求头"));
+        configEntries.add(new ConfigEntry("RemoveReqHeader", "Last-Modified,If-Modified-Since,If-None-Match",ConfigEntry.Config_Basic_Variable,true,false,"无痕修改请求：自动删除指定的请求头"));
 
 
-        configEntries.add(new ConfigEntry("RemoveRespHeader", "Last-Modified,If-Modified-Since,If-None-Match",ConfigEntry.Config_Basic_Variable,false,false,"无痕修改响应：删除指定的请求头"));
+        configEntries.add(new ConfigEntry("RemoveRespHeader", "Last-Modified,If-Modified-Since,If-None-Match",ConfigEntry.Config_Basic_Variable,false,false,"无痕修改响应：自动删除指定的响应头"));
 
-        configEntries.add(new ConfigEntry("ModRespHeaderByReqMethod", "{\"OPTIONS\":\"Content-Type: application/octet-stream\"}",ConfigEntry.Config_Basic_Variable,true,false,"无痕修改响应：方法名 基于请求方法添加|修改响应头"));
-        configEntries.add(new ConfigEntry("ModRespHeaderSetBodyEmpty", "",ConfigEntry.Config_Basic_Variable,false,false,"无痕修改响应：基于请求方法添加|修改响应头时设置响应体为空"));
-        configEntries.add(new ConfigEntry("ModRespHeaderByReqURL", "{\"picture\":\"Content-Type: application/octet-stream\"}",ConfigEntry.Config_Basic_Variable,false,false,"无痕修改响应：关键字|正则 基于请求URL添加|修改响应头"));
-        configEntries.add(new ConfigEntry("ModRespHeaderByRespHeader", "{\"application/json\":\"Content-Type: text/html;charset=utf-8\"}",ConfigEntry.Config_Basic_Variable,false,false,"无痕修改响应：关键字|正则 基于响应头添加|修改响应头"));
+        configEntries.add(new ConfigEntry("ModRespHeaderByReqMethod", "{\"OPTIONS\":\"Content-Type: application/octet-stream\"}",ConfigEntry.Config_Basic_Variable,true,false,"无痕修改响应：基于请求方法自动[添加|修改]响应头"));
+        configEntries.add(new ConfigEntry("ModRespHeaderSetBodyEmpty", "",ConfigEntry.Config_Basic_Variable,false,false,"无痕修改响应：基于请求方法[添加|修改]响应头的同时 设置响应体为空 防止程序根据响应内容设置MIME类型"));
+        configEntries.add(new ConfigEntry("ModRespHeaderByReqURL", "{\"picture\":\"Content-Type: application/octet-stream\"}",ConfigEntry.Config_Basic_Variable,false,false,"无痕修改响应：基于请求URL的[关键字|正则]进行[添加|修改]响应头"));
+        configEntries.add(new ConfigEntry("ModRespHeaderByRespHeader", "{\"application/json\":\"Content-Type: text/html;charset=utf-8\"}",ConfigEntry.Config_Basic_Variable,false,false,"无痕修改响应：基于响应头的[关键字|正则]进行[添加|修改]响应头"));
     }
 
 }
