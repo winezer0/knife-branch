@@ -10,7 +10,7 @@ public class ConfigEntriesPlus {
         configEntries.add(new ConfigEntry("MsgInfoTab", "",ConfigEntry.Config_Basic_Variable,false,false,"消息窗口：添加敏感信息面板"));
 
         //用于指示是否自动加载burp suite的项目配置文件,需要指示Json文件路径,需要支持相对路径,直接在knife下去寻找
-        configEntries.add(new ConfigEntry("Auto_Load_Project_Config", "Project.Config.json",ConfigEntry.Config_Basic_Variable,true,false,"高级配置：启动时自动加载项目配置"));
+        configEntries.add(new ConfigEntry("Auto_Load_Project_Config", "Project.Config.json",ConfigEntry.Config_Basic_Variable,false,false,"高级配置：启动时自动加载项目配置"));
         configEntries.add(new ConfigEntry("Scope_Base_On_SubDomain", "",ConfigEntry.Config_Basic_Variable,true,false,"高级配置：设置Scope时基于子域名操作"));
         configEntries.add(new ConfigEntry("Auto_Save_Scope_Update", "",ConfigEntry.Config_Basic_Variable,true,false,"高级配置：自动保存Scope更新到项目配置"));
         //默认不添加到scope的域名 //需要优化,不能每次都添加
