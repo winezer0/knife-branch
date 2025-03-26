@@ -166,33 +166,31 @@ public class ProcessHttpMessagePlus {
 
     public static void messageReqHandleTraceless(IHttpRequestResponse messageInfo) {
         // 删除无用的请求头信息
-        if (AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.AUTO_REMOVE_REQ_HEADER) != null) {
-            removeReqHeader(messageInfo);
+        //获取对应的格式规则 "Last-Modified,If-Modified-Since,If-None-Match"
+        String removeReqHeaderConfig = AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.AUTO_REMOVE_REQ_HEADER);
+        if (removeReqHeaderConfig != null) {
+            removeReqHeader(messageInfo, removeReqHeaderConfig);
         }
     }
 
-    private static void removeReqHeader(IHttpRequestResponse messageInfo){
+    private static void removeReqHeader(IHttpRequestResponse messageInfo, String removeReqHeaderConfig){
         // 删除无用的请求头信息
         IBurpExtenderCallbacks callbacks = BurpExtender.getCallbacks();
         HelperPlus helperPlus = new HelperPlus(callbacks.getHelpers());
-        //获取对应的格式规则 "Last-Modified,If-Modified-Since,If-None-Match"
-        String removeReqHeaderConfig = AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.AUTO_REMOVE_REQ_HEADER);
 
-        if (removeReqHeaderConfig != null){
-            String[] headers = removeReqHeaderConfig.split(",");
-            if (headers.length > 0){
-                byte[] req = messageInfo.getRequest();
-                int rawLength = req.length;
-                if(rawLength > 0){
-                    //循环删除请求头
-                    for (String header : headers) {
-                        if(!header.trim().isEmpty())
-                            req = helperPlus.removeHeader(true, req, header.trim());
-                    }
-                    if (req.length > 0 && rawLength != req.length){
-                        messageInfo.setRequest(req);
-                        messageInfo.setComment("removed request header");
-                    }
+        String[] headers = removeReqHeaderConfig.split(",");
+        if (headers.length > 0){
+            byte[] req = messageInfo.getRequest();
+            int rawLength = req.length;
+            if(rawLength > 0){
+                //循环删除请求头
+                for (String header : headers) {
+                    if(!header.trim().isEmpty())
+                        req = helperPlus.removeHeader(true, req, header.trim());
+                }
+                if (req.length > 0 && rawLength != req.length){
+                    messageInfo.setRequest(req);
+                    messageInfo.setComment("removed request header");
                 }
             }
         }
