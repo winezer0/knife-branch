@@ -15,10 +15,10 @@ public class ConfigEntriesPlus {
 
     public static String AUTO_REMOVE_REQ_HEADER = "自动移除请求头";
     public static String AUTO_REMOVE_RESP_HEADER = "自动移除响应头";
-    public static String AUTO_MOD_RESP_HEADER_BY_REQ_METHOD = "自动修改响应头-基于请求方法";
-    public static String AUTO_MOD_RESP_HEADER_BY_REQ_URL = "自动修改响应头-基于请求URL";
-    public static String AUTO_MOD_RESP_HEADER_BY_RESP_HEADER = "自动修改响应头-基于响应头";
-    public static String WHEN_MOD_RESP_HEADER_SET_BODY_EMPTY = "修改响应头时设置响应体为空";
+    public static String AUTO_MOD_RESP_HEADER_BY_REQ_METHOD = "自动修改响应头_基于请求方法";
+    public static String AUTO_MOD_RESP_HEADER_BY_REQ_URL = "自动修改响应头_基于请求URL";
+    public static String AUTO_MOD_RESP_HEADER_BY_RESP_HEADER = "自动修改响应头_基于响应头";
+    public static String WHEN_MOD_RESP_HEADER_SET_BODY_EMPTY = "修改响应头时自动清空响应体";
 
     public static String AUTO_ADD_REQ_HEADER = "自动添加请求头";
 
