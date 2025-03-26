@@ -12,33 +12,42 @@ import java.util.List;
 public class ProcessHttpMessagePlus {
     public static void messageRespHandleTraceless(IHttpRequestResponse messageInfo) {
         //删除指定响应头
-        if (AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.AUTO_REMOVE_RESP_HEADER) != null) {
-            removeRespHeader(messageInfo);
+        //获取对应的格式规则 "Last-Modified,If-Modified-Since,If-None-Match"
+        String removeRespHeaderConfig = AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.AUTO_REMOVE_RESP_HEADER);
+        if (removeRespHeaderConfig != null) {
+            removeRespHeader(messageInfo, removeRespHeaderConfig);
         }
+
         //给 Options 方法的响应 添加 Content-Type: application/octet-stream 用于过滤
-        if (AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.AUTO_MOD_RESP_HEADER_BY_REQ_METHOD) != null) {
-            modRespHeaderByReqMethod(messageInfo);
+        //获取对应的Json格式规则  {"OPTIONS":"Content-Type: application/octet-stream"}
+        String modRespHeaderByReqMethodConfig = AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.AUTO_MOD_RESP_HEADER_BY_REQ_METHOD);
+        if (modRespHeaderByReqMethodConfig != null) {
+            modRespHeaderByReqMethod(messageInfo, modRespHeaderByReqMethodConfig);
         }
+
         //给没有后缀的图片URL添加响应头,便于过滤筛选
-        if (AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.AUTO_MOD_RESP_HEADER_BY_REQ_URL) != null) {
-            modRespHeaderByReqUrl(messageInfo);
+        //获取对应的Json格式规则 // {"www.baidu.com":"Content-Type: application/octet-stream"}
+        String modRespHeaderByReqUrlConfig = AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.AUTO_MOD_RESP_HEADER_BY_REQ_URL);
+        if (modRespHeaderByReqUrlConfig != null) {
+            modRespHeaderByReqUrl(messageInfo, modRespHeaderByReqUrlConfig);
         }
+
         //给Json格式的请求的响应添加响应头,防止被Js过滤
-        if (AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.AUTO_MOD_RESP_HEADER_BY_RESP_HEADER) != null) {
-            modRespHeaderByRespHeader(messageInfo);
+        //获取对应的Json格式规则 // {"www.baidu.com":"Content-Type: application/octet-stream"}
+        String modRespHeaderByRespHeaderConfig = AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.AUTO_MOD_RESP_HEADER_BY_RESP_HEADER);
+        if (modRespHeaderByRespHeaderConfig != null) {
+            modRespHeaderByRespHeader(messageInfo, modRespHeaderByRespHeaderConfig);
         }
+
     }
 
-    private static void modRespHeaderByReqMethod(IHttpRequestResponse messageInfo){
+    private static void modRespHeaderByReqMethod(IHttpRequestResponse messageInfo, String modRespHeaderByReqMethodConfig){
         IBurpExtenderCallbacks callbacks = BurpExtender.getCallbacks();
         HelperPlus helperPlus = new HelperPlus(callbacks.getHelpers());
         // 获取 请求方法
         String curMethod = helperPlus.getMethod(messageInfo).toLowerCase();
-
-        //获取对应的Json格式规则  {"OPTIONS":"Content-Type: application/octet-stream"}
-        String ModRespHeaderConfig = AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.AUTO_MOD_RESP_HEADER_BY_REQ_METHOD);
         //解析Json格式的规则
-        HashMap<String, String> modRespHeaderRuleMap = UtilsPlus.parseJsonRule2HashMap(ModRespHeaderConfig, true);
+        HashMap<String, String> modRespHeaderRuleMap = UtilsPlus.parseJsonRule2HashMap(modRespHeaderByReqMethodConfig, true);
 
         if(modRespHeaderRuleMap != null && modRespHeaderRuleMap.containsKey(curMethod)) {
             //获取需要添加的响应头 每个方法只支持一种动作,更多的动作建议使用其他类型的修改方式
@@ -63,16 +72,14 @@ public class ProcessHttpMessagePlus {
         }
     }
 
-    private static void modRespHeaderByReqUrl(IHttpRequestResponse messageInfo){
+    private static void modRespHeaderByReqUrl(IHttpRequestResponse messageInfo, String modRespHeaderByReqUrlConfig){
         IBurpExtenderCallbacks callbacks = BurpExtender.getCallbacks();
         HelperPlus helperPlus = new HelperPlus(callbacks.getHelpers());
         // 获取 请求URL
         String curUrl = helperPlus.getFullURL(messageInfo).toString().toLowerCase();
 
-        //获取对应的Json格式规则 // {"www.baidu.com":"Content-Type: application/octet-stream"}
-        String ModRespHeaderConfig = AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.AUTO_MOD_RESP_HEADER_BY_REQ_URL);
         //解析Json格式的规则
-        HashMap<String, String> modRespHeaderRuleMap = UtilsPlus.parseJsonRule2HashMap(ModRespHeaderConfig, true);
+        HashMap<String, String> modRespHeaderRuleMap = UtilsPlus.parseJsonRule2HashMap(modRespHeaderByReqUrlConfig, true);
 
         if (modRespHeaderRuleMap != null  && modRespHeaderRuleMap.size() > 0 ){
             //循环 获取需要添加的响应头 并 设置响应头信息
@@ -99,13 +106,11 @@ public class ProcessHttpMessagePlus {
         }
     }
 
-    private static void modRespHeaderByRespHeader(IHttpRequestResponse messageInfo){
+    private static void modRespHeaderByRespHeader(IHttpRequestResponse messageInfo, String modRespHeaderByRespHeaderConfig){
         IBurpExtenderCallbacks callbacks = BurpExtender.getCallbacks();
         HelperPlus helperPlus = new HelperPlus(callbacks.getHelpers());
-        //获取对应的Json格式规则 // {"www.baidu.com":"Content-Type: application/octet-stream"}
-        String ModRespHeaderConfig = AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.AUTO_MOD_RESP_HEADER_BY_RESP_HEADER);
         //解析Json格式的规则
-        HashMap<String, String> modRespHeaderRuleMap = UtilsPlus.parseJsonRule2HashMap(ModRespHeaderConfig,false);
+        HashMap<String, String> modRespHeaderRuleMap = UtilsPlus.parseJsonRule2HashMap(modRespHeaderByRespHeaderConfig,false);
         //进行规则处理
         if (modRespHeaderRuleMap != null && modRespHeaderRuleMap.size() > 0){
             //获取响应头
@@ -136,33 +141,28 @@ public class ProcessHttpMessagePlus {
         }
     }
 
-    private static void removeRespHeader(IHttpRequestResponse messageInfo){
+    private static void removeRespHeader(IHttpRequestResponse messageInfo, String removeRespHeaderConfig){
         // 删除无用的请求头信息
         IBurpExtenderCallbacks callbacks = BurpExtender.getCallbacks();
         HelperPlus helperPlus = new HelperPlus(callbacks.getHelpers());
-        //获取对应的格式规则 "Last-Modified,If-Modified-Since,If-None-Match"
-        String removeRespHeaderConfig = AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.AUTO_REMOVE_RESP_HEADER);
 
-        if (removeRespHeaderConfig != null){
-            String[] headers = removeRespHeaderConfig.split(",");
-            if (headers.length > 0){
-                byte[] resp = messageInfo.getResponse();
-                int rawLength = resp.length;
-                if (rawLength > 0){
-                    //循环删除响应头
-                    for (String header : headers) {
-                        if(!header.trim().isEmpty())
-                            resp = helperPlus.removeHeader(false, resp, header.trim());
-                    }
-                    if (resp.length >0 && rawLength != resp.length){
-                        messageInfo.setResponse(resp);
-                        messageInfo.setComment("removed response header");
-                    }
+        String[] headers = removeRespHeaderConfig.split(",");
+        if (headers.length > 0){
+            byte[] resp = messageInfo.getResponse();
+            int rawLength = resp.length;
+            if (rawLength > 0){
+                //循环删除响应头
+                for (String header : headers) {
+                    if(!header.trim().isEmpty())
+                        resp = helperPlus.removeHeader(false, resp, header.trim());
+                }
+                if (resp.length >0 && rawLength != resp.length){
+                    messageInfo.setResponse(resp);
+                    messageInfo.setComment("removed response header");
                 }
             }
         }
     }
-
 
     public static void messageReqHandleTraceless(IHttpRequestResponse messageInfo) {
         // 删除无用的请求头信息
