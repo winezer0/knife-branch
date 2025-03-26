@@ -84,11 +84,11 @@ public class BurpExtender extends GUI implements IBurpExtender, IContextMenuFact
         AdvScopeUtils.addDefaultExcludeHosts(callbacks);
 
         //动态添加 编码转换 面板
-        if (AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.MSG_CHINESE_TAB) != null) {
+        if (AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.SHOW_MSG_CHINESE_TAB) != null) {
             callbacks.registerMessageEditorTabFactory(chntabFactory);// for Chinese
         }
         //动态添加 敏感信息 面板
-        if (AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.MSG_INFO_TAB) != null) {
+        if (AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.SHOW_MSG_INFO_TAB) != null) {
             callbacks.registerMessageEditorTabFactory(infotabFactory);// for Information
         }
         BurpExtender.stdout.println("Load Extension Success ...");
