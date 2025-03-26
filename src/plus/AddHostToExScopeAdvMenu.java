@@ -40,7 +40,7 @@ class AddHostToExScopeAdv_Action implements ActionListener{
     public void actionPerformed(ActionEvent e)
     {
         try{
-            String wildcardSet  = GUI.getConfigTableModel().getConfigValueByKey("Scope_Base_On_SubDomain");
+            String wildcardSet  = GUI.getConfigTableModel().getConfigValueByKey(ConfigEntriesPlus.SCOPE_BASE_ON_SUBDOMAIN);
             HashSet<String> hostHashSet = new HashSet<>();
             IHttpRequestResponse[] messages = invocation.getSelectedMessages();
             for(IHttpRequestResponse message:messages) {

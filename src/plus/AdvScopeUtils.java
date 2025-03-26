@@ -192,7 +192,7 @@ public class AdvScopeUtils {
      * @param callbacks
      */
     public static void autoLoadProjectConfig(IBurpExtenderCallbacks callbacks) {
-        String configPath = getGuiConfigValue("Auto_Load_Project_Config");
+        String configPath = getGuiConfigValue(ConfigEntriesPlus.AUTO_LOAD_PROJECT_CONFIG);
         if (configPath!=null){
             //自动加载burp项目Json的配置 // Project.Config.json 支持相对(BurpSuitePro)和绝对路径
             // 判断功能是否打开|功能打开后进行加载操作
@@ -217,7 +217,7 @@ public class AdvScopeUtils {
      * @param callbacks
      */
     public static void autoSaveProjectConfig(IBurpExtenderCallbacks callbacks) {
-        String configPath  = getGuiConfigValue("Auto_Load_Project_Config");
+        String configPath  = getGuiConfigValue(ConfigEntriesPlus.AUTO_LOAD_PROJECT_CONFIG);
         if(configPath != null){
             File file = new File(configPath);
             try{
@@ -234,7 +234,7 @@ public class AdvScopeUtils {
      * @param callbacks
      */
     public static void autoSaveScopeUpdate(IBurpExtenderCallbacks callbacks){
-        String autoSaveFlag  = getGuiConfigValue("Auto_Save_Scope_Update");
+        String autoSaveFlag  = getGuiConfigValue(ConfigEntriesPlus.AUTO_SAVE_SCOPE_WHEN_UPDATE);
         if(autoSaveFlag!=null){
             autoSaveProjectConfig(callbacks);
         }
@@ -245,7 +245,7 @@ public class AdvScopeUtils {
      * @param callbacks
      */
     public static void addDefaultExcludeHosts(IBurpExtenderCallbacks callbacks) {
-        String defaultExcludeHosts  = getGuiConfigValue("Add_Exclude_Scope_Hosts");
+        String defaultExcludeHosts  = getGuiConfigValue(ConfigEntriesPlus.ADD_EXCLUDE_SCOPE_HOSTS);
         if (defaultExcludeHosts!=null && defaultExcludeHosts.trim().length()>0){
             HashSet<String> hashSet = new HashSet<>();
             //切割并整理输入
