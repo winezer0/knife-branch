@@ -20,6 +20,7 @@ import burp.BurpExtender;
 import burp.IBurpExtenderCallbacks;
 import burp.IHttpRequestResponse;
 import burp.IInterceptedProxyMessage;
+import plus.RandomIPUtils;
 import runcmd.MessagePart;
 
 public class ConfigEntry {
@@ -434,11 +435,17 @@ public class ConfigEntry {
         String configKey = getKey();
         String configValue = getFinalValue(messageInfo);
 
+        //判断 headerValue 是不是IP格式,是的话进行进行随机化处理
+        if(RandomIPUtils.isMultipleOrCidrIp(configValue)){
+            configValue = RandomIPUtils.getRandomIpFromRanges(configValue);
+        }
+
         HelperPlus getter = new HelperPlus(BurpExtender.callbacks.getHelpers());
 
         if (messageIsRequest) {//数据包自动修改
             switch (type) {
                 case Action_Add_Or_Replace_Header:
+                    getter.addOrUpdateHeader(true, messageInfo, configKey, configValue);
                 case Action_If_Base_URL_Matches_Add_Or_Replace_Header:
                     getter.addOrUpdateHeader(true, messageInfo, configValue);
                     //注意，单个分支应该break。
