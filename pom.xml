@@ -6,7 +6,7 @@
 	</properties>
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.bit4woo.burp</groupId>
-	<version>2.3.18</version>
+	<version>2.3.20</version>
 
 	<repositories>
 		<repository>
@@ -82,19 +82,19 @@
 			<version>1.7.22</version>
 		</dependency>
 
-		<!-- https://github.com/bit4woo/java_utilbox -->
-		<dependency>
-			<groupId>com.github.bit4woo</groupId>
-			<artifactId>java_utilbox</artifactId>
-			<version>main-SNAPSHOT</version>
-		</dependency>
-		
-<!--		&lt;!&ndash;本地引用 先把最新的 java-utilbox 代码 下载到本地 再使用maven插件生命周期deploy到本地mvn仓库后使用&ndash;&gt;-->
+<!--		&lt;!&ndash; https://github.com/bit4woo/java_utilbox &ndash;&gt;-->
 <!--		<dependency>-->
-<!--			<groupId>com.bit4woo.utilbox</groupId>-->
-<!--			<artifactId>java-utilbox</artifactId>-->
-<!--			<version>0.1</version>-->
+<!--			<groupId>com.github.bit4woo</groupId>-->
+<!--			<artifactId>java_utilbox</artifactId>-->
+<!--			<version>main-SNAPSHOT</version>-->
 <!--		</dependency>-->
+
+		<!--本地引用 先把最新的 java-utilbox 代码 下载到本地 再使用maven插件生命周期deploy到本地mvn仓库后使用-->
+		<dependency>
+			<groupId>com.bit4woo.utilbox</groupId>
+			<artifactId>java-utilbox</artifactId>
+			<version>0.1</version>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/commons-codec/commons-codec <dependency> 
 			<groupId>commons-codec</groupId> <artifactId>commons-codec</artifactId> <version>1.11</version> 
 			</dependency> -->

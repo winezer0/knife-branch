@@ -16,7 +16,6 @@ public class MimeTypesList {
 	
 	/**
 	 * 生成用于作为路径黑名单的MIME列表
-	 * @param args
 	 */
     public static List<String> genMIMETypeListAsPathBlackList() {
     	List<String> result = new ArrayList<>();

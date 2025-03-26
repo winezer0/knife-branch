@@ -47,7 +47,7 @@ public class ProcessHttpMessagePlus {
         // 获取 请求方法
         String curMethod = helperPlus.getMethod(messageInfo).toLowerCase();
         //解析Json格式的规则
-        HashMap<String, String> modRespHeaderRuleMap = UtilsPlus.parseJsonRule2HashMap(modRespHeaderByReqMethodConfig, true);
+        HashMap<String, String> modRespHeaderRuleMap = UtilsPlus.parseJsonRule2HashMap(modRespHeaderByReqMethodConfig, false);
 
         if(modRespHeaderRuleMap != null && modRespHeaderRuleMap.containsKey(curMethod)) {
             //获取需要添加的响应头 每个方法只支持一种动作,更多的动作建议使用其他类型的修改方式
@@ -79,7 +79,7 @@ public class ProcessHttpMessagePlus {
         String curUrl = helperPlus.getFullURL(messageInfo).toString().toLowerCase();
 
         //解析Json格式的规则
-        HashMap<String, String> modRespHeaderRuleMap = UtilsPlus.parseJsonRule2HashMap(modRespHeaderByReqUrlConfig, true);
+        HashMap<String, String> modRespHeaderRuleMap = UtilsPlus.parseJsonRule2HashMap(modRespHeaderByReqUrlConfig, false);
 
         if (modRespHeaderRuleMap != null  && modRespHeaderRuleMap.size() > 0 ){
             //循环 获取需要添加的响应头 并 设置响应头信息
@@ -158,7 +158,7 @@ public class ProcessHttpMessagePlus {
                 }
                 if (resp.length >0 && rawLength != resp.length){
                     messageInfo.setResponse(resp);
-                    messageInfo.setComment("removed response header");
+                    messageInfo.setComment("removeRespHeader");
                 }
             }
         }
@@ -170,6 +170,11 @@ public class ProcessHttpMessagePlus {
         String removeReqHeaderConfig = AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.AUTO_REMOVE_REQ_HEADER);
         if (removeReqHeaderConfig != null) {
             removeReqHeader(messageInfo, removeReqHeaderConfig);
+        }
+
+        String addReqHeaderConfig = AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.AUTO_ADD_REQ_HEADER);
+        if (addReqHeaderConfig != null) {
+            addReqHeader(messageInfo, addReqHeaderConfig);
         }
     }
 
@@ -190,10 +195,38 @@ public class ProcessHttpMessagePlus {
                 }
                 if (req.length > 0 && rawLength != req.length){
                     messageInfo.setRequest(req);
-                    messageInfo.setComment("removed request header");
+                    messageInfo.setComment("removeReqHeader");
                 }
             }
         }
     }
 
+    private static void addReqHeader(IHttpRequestResponse messageInfo, String addReqHeaderConfig) {
+        //添加自定义的请求头配置 要支持随机IP属性
+        IBurpExtenderCallbacks callbacks = BurpExtender.getCallbacks();
+        HelperPlus helperPlus = new HelperPlus(callbacks.getHelpers());
+        //解析Json格式的规则
+        HashMap<String, String> addReqHeaderRuleMap = UtilsPlus.parseJsonRule2HashMap(addReqHeaderConfig, false);
+        if(addReqHeaderRuleMap != null && addReqHeaderRuleMap.size() > 0) {
+            //循环添加修改请求头
+            byte[] reqBytes = messageInfo.getRequest();
+            if (reqBytes.length > 0){
+                //添加响应头
+                for (String headerName:addReqHeaderRuleMap.keySet()) {
+                    //获取需要添加的请求头 每个请求支持多种动作规则
+                    String headerValue = addReqHeaderRuleMap.get(headerName);
+                    if(headerValue != null){
+                        //判断 headerValue 是不是IP格式,是的话进行进行随机化处理
+                        if(RandomIPUtils.isMultipleOrCidrIp(headerValue)){
+                            headerValue = RandomIPUtils.getRandomIpFromRanges(headerValue);
+                        }
+                        reqBytes = helperPlus.addOrUpdateHeader(true, reqBytes, headerName, headerValue);
+                    }
+                }
+                //设置新的内容
+                messageInfo.setResponse(reqBytes);
+                messageInfo.setComment("addReqHeader");
+            }
+        }
+    }
 }
