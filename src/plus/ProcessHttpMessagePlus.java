@@ -86,6 +86,12 @@ public class ProcessHttpMessagePlus {
                         resp = helperPlus.addOrUpdateHeader(false, resp, newRespHeaderLine);
                     }
                 }
+
+                // 修改响应体为空, 防止程序根据响应内容设置MIME类型
+                if (AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.WHEN_MOD_RESP_HEADER_SET_BODY_EMPTY) != null){
+                    resp = helperPlus.UpdateBody(false, resp, "".getBytes(StandardCharsets.UTF_8));
+                }
+
                 //设置新的内容
                 messageInfo.setResponse(resp);
                 messageInfo.setComment("modRespHeaderByReqUrl");
@@ -117,6 +123,12 @@ public class ProcessHttpMessagePlus {
                         }
                     }
                 }
+
+                // 修改响应体为空, 防止程序根据响应内容设置MIME类型
+                if (AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.WHEN_MOD_RESP_HEADER_SET_BODY_EMPTY) != null){
+                    resp = helperPlus.UpdateBody(false, resp, "".getBytes(StandardCharsets.UTF_8));
+                }
+                
                 //设置新的内容
                 messageInfo.setResponse(resp);
                 messageInfo.setComment("modRespHeaderByRespHeader");
