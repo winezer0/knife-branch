@@ -224,7 +224,7 @@ public class ProcessHttpMessagePlus {
                     }
                 }
                 //设置新的内容
-                messageInfo.setResponse(reqBytes);
+                messageInfo.setRequest(reqBytes);
                 messageInfo.setComment("addReqHeader");
             }
         }
