@@ -1,9 +1,12 @@
 package plus;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Random;
 import java.util.regex.Pattern;
-import java.util.Arrays;
 import java.util.List;
+
+import static plus.UtilsPlus.splitStringToList;
 
 public class RandomIPUtils {
     private static final Pattern IP_WITH_CIDR_PATTERN = Pattern.compile("^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/([0-9]|[1-2][0-9]|3[0-2])$");
@@ -12,59 +15,14 @@ public class RandomIPUtils {
     /**
      * 判断字符串是否是单个 IP/网段格式 10.0.0.0/24
      */
-    public static boolean isCidrIpv4(String input) {
+    private static boolean isCidrIpv4(String input) {
         return input != null && IP_WITH_CIDR_PATTERN.matcher(input.trim()).matches();
-    }
-
-    /**
-     * 判断字符串是否是单个 IP/网段格式或多个IP网段格式
-     * @param input 输入字符串
-     * @return 如果是 IP/网段格式返回 true，否则返回 false
-     */
-    public static boolean isMultipleOrCidrIp(String input) {
-        if (input == null || input.trim().isEmpty()) {
-            return false;
-        }
-
-        String[] ipRanges = input.split("\\|");
-        for (String ipRange : ipRanges) {
-            String trimmed = ipRange.trim();
-            if (trimmed.isEmpty() || !isCidrIpv4(trimmed)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * 从 IP/网段或多个网段中随机返回一个 IP 地址
-     * @param ipRange IP/网段字符串，如 "192.168.0.1/30" 或 "192.168.0.1/24|10.0.0.1/24"
-     * @return 随机生成的 IP 地址
-     * @throws IllegalArgumentException 如果输入格式无效
-     */
-    public static String getRandomIpFromRanges(String ipRange) {
-        String selectedRange = ipRange;
-        if (ipRange.contains("|")) {
-            // 拆分多个网段
-            String[] ipRanges = ipRange.split("\\|");
-            List<String> rangeList = Arrays.asList(ipRanges);
-            // 随机选择一个网段
-            selectedRange = rangeList.get(random.nextInt(rangeList.size())).trim();
-        }
-        // 从选中的网段中随机获取一个IP
-        String randomIp = selectedRange;
-        try {
-            randomIp = getRandomIpFromRange(selectedRange);
-        } catch (Exception exception){
-            System.out.println(String.format("get Random Ip From Range [%s] Error:%s", selectedRange, exception));
-        }
-        return randomIp;
     }
 
     /**
      * 从单个 IP/网段中随机返回一个 IP 地址
      */
-    public static String getRandomIpFromRange(String ipWithCidr) {
+    private static String getRandomIpFromRange(String ipWithCidr) {
         String[] parts = ipWithCidr.split("/");
         String ip = parts[0].trim();
         int cidr = Integer.parseInt(parts[1].trim());
@@ -105,27 +63,42 @@ public class RandomIPUtils {
                 (ip & 0xFF);
     }
 
-    public static void main(String[] args) {
-        String singleRange = "192.168.0.0/24";
-        System.out.println("Single range test:");
-        System.out.println(singleRange + " is valid: " + isMultipleOrCidrIp(singleRange));
-        System.out.println("Random IP: " + getRandomIpFromRanges(singleRange));
 
-        String multipleRanges = "192.168.10.1/24|172.16.10.1/24|10.10.10.1/24";
-        System.out.println("\nMultiple ranges test:");
-        System.out.println(multipleRanges + " is valid: " + isMultipleOrCidrIp(multipleRanges));
-        for (int i = 0; i < 5; i++) {
-            System.out.println("Random IP: " + getRandomIpFromRanges(multipleRanges));
+    /**
+     * 判断字符串是否是单个 IP/网段格式或多个IP网段格式
+     * @param input 输入字符串
+     * @return 如果是 IP/网段格式返回 true，否则返回 false
+     */
+    public static boolean isMultiOrCidrIp(String input) {
+        if (input == null || input.trim().isEmpty()) {
+            return false;
         }
 
-
-        String invalidInput = "192.168.0.1/33|invalid";
-        System.out.println("\nInvalid input test:");
-        System.out.println(invalidInput + " is valid: " + isMultipleOrCidrIp(invalidInput));
-        try {
-            System.out.println("Random IP: " + getRandomIpFromRanges(invalidInput));
-        } catch (IllegalArgumentException e) {
-            System.out.println("Error: " + e.getMessage());
+        String delimiter = input.contains("&&") ? "&&" : "||";
+        List<String> ipRanges = UtilsPlus.splitString(input, delimiter, true);
+        for (String ipRange : ipRanges) {
+            String trimmed = ipRange.trim();
+            if (trimmed.isEmpty() || !isCidrIpv4(trimmed)) {
+                return false;
+            }
+            return true;
         }
+
+        return false;
+    }
+
+    public static List<String> splitIpRangesToList(String ipString){
+//        //判断 string 是不是IP格式,是的话才进行随机化处理
+//        if (!isMultiOrCidrIp(ipString)) {
+//            return Collections.singletonList(ipString);
+//        }
+
+        //直接对所有的值都进行切割语法支持 || && 应该默认不会有吧
+        List<String> ipRangeList = splitStringToList(ipString);
+        List<String> result = new ArrayList<>(ipRangeList.size());
+        for (String ipRange : ipRangeList) {
+            result.add(getRandomIpFromRange(ipRange));
+        }
+        return result;
     }
 }

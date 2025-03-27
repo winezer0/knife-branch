@@ -13,6 +13,8 @@ import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.List;
+import java.util.Random;
 
 public class UtilsPlus {
     /**
@@ -62,7 +64,6 @@ public class UtilsPlus {
         }
         return domain;
     }
-
 
     /**
      * 去除JsonArray里面指定键 并且 值包含在hastset中的元素
@@ -302,5 +303,66 @@ public class UtilsPlus {
             System.out.println(e.getMessage());
         }
         return addRespHeaderValue;
+    }
+
+
+    /**
+     * 通用字符串分割方法
+     * @param string 要分割的字符串
+     * @param delimiter 分隔符（可以是正则特殊字符）
+     * @return 分割后的列表
+     */
+    public static List<String> splitString(String string, String delimiter, boolean trim) {
+        // 处理null或空输入字符串
+        if (string == null || string.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 处理null或空分隔符
+        if (delimiter == null || delimiter.isEmpty()) {
+            return Collections.singletonList(string);
+        }
+
+        // 执行分割
+        String[] parts = string.split(Pattern.quote(delimiter));
+        ArrayList<String> result = new ArrayList<>();
+        for (String part:parts){
+            if (trim){
+                String trims = part.trim();
+                if (!trims.isEmpty()) result.add(trims);
+            } else {
+                result.add(part);
+            }
+        }
+        return result;
+    }
+
+    private static final Random random = new Random();
+    public static <T> T getRandomElement(List<T> list) {
+        if (list == null || list.isEmpty()) {
+            return null;
+        }
+        return list.get(random.nextInt(list.size()));
+    }
+
+    /**
+     * 切割 xxx|xxx 或者 XXX&xxx的格式
+     * @param string
+     * @return
+     */
+    public static List<String> splitStringToList(String string) {
+        if(string==null || string.isEmpty()){
+            return Collections.emptyList();
+        }
+        List<String> headers = Collections.singletonList(string);
+        if (string.contains("&&")){
+            headers = splitString(string, "&&", true);
+        } else if(string.contains("||")){
+            headers = splitString(string, "||", true);
+            //选择其中一个即可
+            String randomStr = getRandomElement(headers);
+            headers = randomStr!=null? Collections.singletonList(randomStr) : headers;
+        }
+        return headers;
     }
 }

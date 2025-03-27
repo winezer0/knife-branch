@@ -9,6 +9,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 
+import static plus.RandomIPUtils.splitIpRangesToList;
+import static plus.UtilsPlus.splitStringToList;
+
 public class ProcessHttpMessagePlus {
     public static void messageRespHandleTraceless(IHttpRequestResponse messageInfo) {
         //删除指定响应头
@@ -215,12 +218,14 @@ public class ProcessHttpMessagePlus {
                 for (String headerName:addReqHeaderRuleMap.keySet()) {
                     //获取需要添加的请求头 每个请求支持多种动作规则
                     String headerValue = addReqHeaderRuleMap.get(headerName);
-                    if(headerValue != null){
-                        //判断 headerValue 是不是IP格式,是的话进行进行随机化处理
-                        if(RandomIPUtils.isMultipleOrCidrIp(headerValue)){
-                            headerValue = RandomIPUtils.getRandomIpFromRanges(headerValue);
+                    //转换请求头格式为列表,以支持 XFF|X-REAL IP 这种多个头但是要相同值的情况
+                    List<String> headerList = splitStringToList(headerName);
+                    //转换结果格式 以支持 多个IP随机的格式
+                    List<String> valueList = splitIpRangesToList(headerValue);
+                    for (String header: headerList){
+                        for (String value: valueList){
+                            reqBytes = helperPlus.addOrUpdateHeader(true, reqBytes, header, value);
                         }
-                        reqBytes = helperPlus.addOrUpdateHeader(true, reqBytes, headerName, headerValue);
                     }
                 }
                 //设置新的内容

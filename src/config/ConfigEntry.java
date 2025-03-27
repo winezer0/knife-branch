@@ -1,6 +1,8 @@
 package config;
 
 import static burp.BurpExtender.isInCheckBoxScope;
+import static plus.RandomIPUtils.splitIpRangesToList;
+import static plus.UtilsPlus.splitStringToList;
 import static runcmd.MessagePart.getValueByPartType;
 
 import java.lang.reflect.Field;
@@ -13,14 +15,12 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 
 import com.bit4woo.utilbox.burp.HelperPlus;
-import com.bit4woo.utilbox.utils.TextUtils;
 import com.google.gson.Gson;
 
 import burp.BurpExtender;
 import burp.IBurpExtenderCallbacks;
 import burp.IHttpRequestResponse;
 import burp.IInterceptedProxyMessage;
-import plus.RandomIPUtils;
 import runcmd.MessagePart;
 
 public class ConfigEntry {
@@ -435,17 +435,20 @@ public class ConfigEntry {
         String configKey = getKey();
         String configValue = getFinalValue(messageInfo);
 
-        //判断 headerValue 是不是IP格式,是的话进行进行随机化处理
-        if(RandomIPUtils.isMultipleOrCidrIp(configValue)){
-            configValue = RandomIPUtils.getRandomIpFromRanges(configValue);
-        }
-
         HelperPlus getter = new HelperPlus(BurpExtender.callbacks.getHelpers());
 
         if (messageIsRequest) {//数据包自动修改
             switch (type) {
                 case Action_Add_Or_Replace_Header:
-                    getter.addOrUpdateHeader(true, messageInfo, configKey, configValue);
+                    //判断 configValue 是不是IP格式,是的话进行进行随机化处理
+                    List<String> headerList = splitStringToList(configKey);
+                    //转换请求头格式
+                    List<String> valueList = splitIpRangesToList(configValue);
+                    for (String header: headerList){
+                        for (String value: valueList){
+                            getter.addOrUpdateHeader(true, messageInfo, header, value);
+                        }
+                    }
                 case Action_If_Base_URL_Matches_Add_Or_Replace_Header:
                     getter.addOrUpdateHeader(true, messageInfo, configValue);
                     //注意，单个分支应该break。

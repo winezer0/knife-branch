@@ -41,6 +41,6 @@ public class ConfigEntriesPlus {
         configEntries.add(new ConfigEntry(AUTO_MOD_RESP_HEADER_BY_RESP_HEADER, "{\"application/json\":\"Content-Type: text/html;charset=utf-8\"}",ConfigEntry.Config_Basic_Variable,false,false,"无痕修改：基于[响应头正则]修改响应头"));
         configEntries.add(new ConfigEntry(WHEN_MOD_RESP_HEADER_SET_BODY_EMPTY, "",ConfigEntry.Config_Basic_Variable,false,false,"无痕修改：清空响应体 防止Burp根据响应内容设置MIME类型"));
 
-        configEntries.add(new ConfigEntry(AUTO_ADD_REQ_HEADER, "{\"X-Forwarded-For\":\"127.0.0.1/32\",\"X-Real-IP\":\"127.0.0.1/32\"}",ConfigEntry.Config_Basic_Variable,false,false,"无痕修改：自动添加请求头 支持解析CIDR获取随机IP"));
+        configEntries.add(new ConfigEntry(AUTO_ADD_REQ_HEADER, "{\"X-Forwarded-For&&X-Real-IP\":\"127.0.0.1/32||192.168.0.1/24\"}",ConfigEntry.Config_Basic_Variable,false,false,"无痕修改：自动添加请求头 支持解析CIDR获取随机IP"));
     }
 }
