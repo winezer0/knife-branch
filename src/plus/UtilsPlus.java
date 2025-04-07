@@ -346,11 +346,11 @@ public class UtilsPlus {
     }
 
     /**
-     * 切割 xxx|xxx 或者 XXX&xxx的格式
+     * 切割 xxx||xxx 或者 XXX&&xxx的语法格式
      * @param string
      * @return
      */
-    public static List<String> splitStringToList(String string) {
+    public static List<String> splitStringToListWithGrammar(String string) {
         if(string==null || string.isEmpty()){
             return Collections.emptyList();
         }

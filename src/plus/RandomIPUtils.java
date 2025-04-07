@@ -1,12 +1,11 @@
 package plus;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Random;
 import java.util.regex.Pattern;
 import java.util.List;
 
-import static plus.UtilsPlus.splitStringToList;
+import static plus.UtilsPlus.splitStringToListWithGrammar;
 
 public class RandomIPUtils {
     private static final Pattern IP_WITH_CIDR_PATTERN = Pattern.compile("^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/([0-9]|[1-2][0-9]|3[0-2])$");
@@ -22,7 +21,7 @@ public class RandomIPUtils {
     /**
      * 从单个 IP/网段中随机返回一个 IP 地址
      */
-    private static String getRandomIpFromRange(String ipWithCidr) {
+    private static String getRandomIpFromIPCidr(String ipWithCidr) {
         String[] parts = ipWithCidr.split("/");
         String ip = parts[0].trim();
         int cidr = Integer.parseInt(parts[1].trim());
@@ -63,41 +62,24 @@ public class RandomIPUtils {
                 (ip & 0xFF);
     }
 
-
     /**
-     * 判断字符串是否是单个 IP/网段格式或多个IP网段格式
-     * @param input 输入字符串
-     * @return 如果是 IP/网段格式返回 true，否则返回 false
+     *
+     * 对参数值进行语法切割,并且对切割后的结果进行CiDr格式化处理
+     * @param ipString
+     * @return
      */
-    public static boolean isMultiOrCidrIp(String input) {
-        if (input == null || input.trim().isEmpty()) {
-            return false;
-        }
-
-        String delimiter = input.contains("&&") ? "&&" : "||";
-        List<String> ipRanges = UtilsPlus.splitString(input, delimiter, true);
-        for (String ipRange : ipRanges) {
-            String trimmed = ipRange.trim();
-            if (trimmed.isEmpty() || !isCidrIpv4(trimmed)) {
-                return false;
-            }
-            return true;
-        }
-
-        return false;
-    }
-
-    public static List<String> splitIpRangesToList(String ipString){
-//        //判断 string 是不是IP格式,是的话才进行随机化处理
-//        if (!isMultiOrCidrIp(ipString)) {
-//            return Collections.singletonList(ipString);
-//        }
-
+    public static List<String> splitStrToListWithGrammarAndRender(String ipString){
         //直接对所有的值都进行切割语法支持 || && 应该默认不会有吧
-        List<String> ipRangeList = splitStringToList(ipString);
+        List<String> ipRangeList = splitStringToListWithGrammar(ipString);
         List<String> result = new ArrayList<>(ipRangeList.size());
         for (String ipRange : ipRangeList) {
-            result.add(getRandomIpFromRange(ipRange));
+            String ipRangeTrimmed = ipRange.trim();
+            if (isCidrIpv4(ipRangeTrimmed)){
+                ipRangeTrimmed = getRandomIpFromIPCidr(ipRangeTrimmed);
+            }
+            if (!ipRangeTrimmed.isEmpty()){
+                result.add(ipRangeTrimmed);
+            }
         }
         return result;
     }

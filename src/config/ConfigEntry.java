@@ -1,8 +1,8 @@
 package config;
 
 import static burp.BurpExtender.isInCheckBoxScope;
-import static plus.RandomIPUtils.splitIpRangesToList;
-import static plus.UtilsPlus.splitStringToList;
+import static plus.RandomIPUtils.splitStrToListWithGrammarAndRender;
+import static plus.UtilsPlus.splitStringToListWithGrammar;
 import static runcmd.MessagePart.getValueByPartType;
 
 import java.lang.reflect.Field;
@@ -441,9 +441,9 @@ public class ConfigEntry {
             switch (type) {
                 case Action_Add_Or_Replace_Header:
                     //判断 configValue 是不是IP格式,是的话进行进行随机化处理
-                    List<String> headerList = splitStringToList(configKey);
+                    List<String> headerList = splitStringToListWithGrammar(configKey);
                     //转换请求头格式
-                    List<String> valueList = splitIpRangesToList(configValue);
+                    List<String> valueList = splitStrToListWithGrammarAndRender(configValue);
                     for (String header: headerList){
                         for (String value: valueList){
                             getter.addOrUpdateHeader(true, messageInfo, header, value);
