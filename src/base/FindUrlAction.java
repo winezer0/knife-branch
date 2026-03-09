@@ -8,7 +8,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -381,11 +383,23 @@ public class FindUrlAction implements ActionListener {
 	public static String choseAndEditBaseURL(List<String> inputs, String referUrl, String currentUrl) {
 		inputs = findPossibleBaseURL(inputs, referUrl, currentUrl);
 
-		int n = inputs.size() + 1;
+		Set<String> uniqueUrls = new LinkedHashSet<>();
+
+		for (String url : inputs) {
+		    if (url.length() >= 150 && url.contains("?")) {
+		        url = url.substring(0, url.indexOf('?'));
+		    }
+		    uniqueUrls.add(url); // 自动去重
+		}
+
+		int n = uniqueUrls.size() + 1;
 		String[] possibleValues = new String[n];
 
-		// Copying contents of domains to arr[]
-		System.arraycopy(inputs.toArray(), 0, possibleValues, 0, n - 1);
+		int index = 0;
+		for (String url : uniqueUrls) {
+		    possibleValues[index++] = url;
+		}
+		
 		possibleValues[n - 1] = "Let Me Input";
 
 		String selectedValue = (String) JOptionPane.showInputDialog(null,
