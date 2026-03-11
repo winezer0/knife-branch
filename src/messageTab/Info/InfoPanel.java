@@ -119,6 +119,11 @@ public class InfoPanel extends JPanel {
         add(footPanel, BorderLayout.SOUTH);
     }
 
+	public void displayBaseUrl(String baseUrl) {
+		if (headPanel !=null) {
+			((InfoPanelHeadPanel)headPanel).setBaseUrl(baseUrl.trim());
+		}
+	}
 
     private Timer createSearchTimer() {
         Timer searchTimer = new Timer(1000, new ActionListener() {

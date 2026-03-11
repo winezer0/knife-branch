@@ -210,6 +210,15 @@ public class InfoTab implements IMessageEditorTab {
 			    	}
 
 			        try {
+						String originUrl = ((InfoPanel) panel).getTable().getOriginUrl();
+						if (StringUtils.isNotEmpty(originUrl)) {
+							String baseUrl = FindUrlAction.httpServiceBaseUrlMap.get(originUrl);
+							if (StringUtils.isNotEmpty(baseUrl)) {
+								((InfoPanel)panel).displayBaseUrl(baseUrl);
+							}
+						}
+						
+			        	
 			            List<InfoEntry> newEntries = get();
 			            InfoTableModel model = ((InfoPanel) panel).getTable().getInfoTableModel();
 

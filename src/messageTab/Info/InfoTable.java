@@ -198,7 +198,7 @@ public class InfoTable extends JTable {
 		String referUrl = getReferUrl();
 		String currentUrl = getFullUrl();
 		String baseUrl = FindUrlAction.choseAndEditBaseURL(allUrlsOfTarget,referUrl,currentUrl);
-		((InfoPanelHeadPanel)(InfoPanel.getHeadPanel())).setBaseUrl(baseUrl.trim());
+		infoPanel.displayBaseUrl(baseUrl);
 		return baseUrl;
 	}
 	/**
