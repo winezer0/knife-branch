@@ -441,9 +441,11 @@ public class FindUrlAction implements ActionListener {
 			String urlItem = it.next();
 			if (UrlUtils.uselessExtension(urlItem)) {
 				it.remove();
+				continue;
 			}
 			if (TextUtils.containsAny(urlItem, blackPath, false)) {
 				it.remove();
+				continue;
 			}
 			try {
 				String host = new URL(urlItem).getHost();
