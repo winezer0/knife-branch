@@ -58,7 +58,8 @@ public class ConfigTableModel extends AbstractTableModel{
 				configEntries.add(new ConfigEntry("browserPath", Firefox_Windows_D,ConfigEntry.Config_Basic_Variable,true,false));
 			}
 		}
-		configEntries.add(new ConfigEntry("tokenHeaders", "token,Authorization,Auth,jwt",ConfigEntry.Config_Basic_Variable,true,false));
+		String authHeaders = "token,Authorization,Auth,jwt,X-Token,X-Auth-Token,Access-Token,X-Access-Token,ApiKey,X-API-Key,Session,Authentication";
+		configEntries.add(new ConfigEntry("tokenHeaders", authHeaders,ConfigEntry.Config_Basic_Variable,true,false,"触发更新Header菜单的常见认证头"));
 		//configEntries.add(new ConfigEntry("DismissedTargets", "{\"*.firefox.com\":\"Drop\",\"*.mozilla.com\":\"Drop\"}",ConfigEntry.Config_Basic_Variable,true,false));
 		//configEntries.add(new ConfigEntry("DismissedAutoForward", "*.firefox.com,*.mozilla.com",ConfigEntry.Config_Basic_Variable,true,false));
 		//configEntries.add(new ConfigEntry("DismissedHost", "*.firefox.com,*.mozilla.com",ConfigEntry.Config_Basic_Variable,true,false));
