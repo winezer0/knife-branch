@@ -16,6 +16,7 @@ import javax.swing.table.AbstractTableModel;
 import com.bit4woo.utilbox.utils.SystemUtils;
 
 import burp.BurpExtender;
+import plus.ConfigEntriesPlus;
 
 
 public class ConfigTableModel extends AbstractTableModel{
@@ -40,7 +41,7 @@ public class ConfigTableModel extends AbstractTableModel{
 			+ "--max-rtt-timeout 1000ms --max-retries 0 --max-scan-delay 0 --min-rate 3000 {Host}";
 
 	private static final String Robot_Input_Comment = "this config effects how sqlmap and nmap runs";
-	
+
 	public static String genDnslogPayload() {
 		String fullPayload = BurpExtender.DNSlogClient.generatePayload(false)+"."+BurpExtender.DNSlogClient.getCollaboratorServerLocation();
 		return fullPayload;
@@ -49,6 +50,9 @@ public class ConfigTableModel extends AbstractTableModel{
 	public static List<ConfigEntry> initDefaultConfigs() {
 		List<ConfigEntry> defaultConfigEntries = new ArrayList<>();
 		defaultConfigEntries.add(new ConfigEntry("Put_MenuItems_In_One_Menu", "",ConfigEntry.Config_Basic_Variable,false,false));
+		//添加自定义的规则
+		ConfigEntriesPlus.configEntriesAddSome(defaultConfigEntries);
+
 		defaultConfigEntries.add(new ConfigEntry("DNSlogServer", genDnslogPayload(),ConfigEntry.Config_Basic_Variable,true,false));
 		if (SystemUtils.isMac()) {
 			defaultConfigEntries.add(new ConfigEntry("browserPath", Firefox_Mac,ConfigEntry.Config_Basic_Variable,true,false));
@@ -59,7 +63,8 @@ public class ConfigTableModel extends AbstractTableModel{
 				defaultConfigEntries.add(new ConfigEntry("browserPath", Firefox_Windows_D,ConfigEntry.Config_Basic_Variable,true,false));
 			}
 		}
-		defaultConfigEntries.add(new ConfigEntry("tokenHeaders", "token,Authorization,Auth,jwt",ConfigEntry.Config_Basic_Variable,true,false));
+		String authHeaders = "token,Authorization,Auth,jwt,X-Token,X-Auth-Token,Access-Token,X-Access-Token,ApiKey,X-API-Key,Session,Authentication";
+		defaultConfigEntries.add(new ConfigEntry("tokenHeaders", authHeaders,ConfigEntry.Config_Basic_Variable,true,false,"触发更新Header菜单的常见认证头"));
 		//defaultConfigEntries.add(new ConfigEntry("DismissedTargets", "{\"*.firefox.com\":\"Drop\",\"*.mozilla.com\":\"Drop\"}",ConfigEntry.Config_Basic_Variable,true,false));
 		//defaultConfigEntries.add(new ConfigEntry("DismissedAutoForward", "*.firefox.com,*.mozilla.com",ConfigEntry.Config_Basic_Variable,true,false));
 		//defaultConfigEntries.add(new ConfigEntry("DismissedHost", "*.firefox.com,*.mozilla.com",ConfigEntry.Config_Basic_Variable,true,false));

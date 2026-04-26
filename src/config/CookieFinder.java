@@ -30,71 +30,68 @@ public class CookieFinder {
     }
     
     /**
+     * 从History中查找当前Host最新的包含Cookie的请求包
      * 
-     * @param shortUrl
-     * @param originUrl
-     * @param historyMessages
-     * @param headerName
-     * @return
+     * @param sourceUrl 当前请求的完整URL
+     * @param originUrl 当前请求的Origin头（暂未使用）
+     * @param historyMessages History消息数组
+     * @param headerName 要查找的Header名称
+     * @return CookieRecorder对象，包含查找到的Cookie
      */
     public static CookieRecorder getLatestHeader(String sourceUrl,String originUrl, IHttpRequestResponse[] historyMessages, String headerName) {
     	CookieRecorder result = new CookieRecorder();
     	
     	String shortUrl = UrlUtils.getBaseUrl(sourceUrl);//url格式标准化，以保证后面比较的准确性。
         shortUrl = HelperPlus.removeUrlDefaultPort(shortUrl);//url格式标准化，以保证后面比较的准确性。
-        //String path = UrlUtils.getPath(sourceUrl);
         String host = UrlUtils.getHost(shortUrl);
         String rootDomain = null;
-        String originHost = null;
-        String originRootDomain = null;
-
         
     	if (DomainUtils.isValidDomainMayPort(host)) {
     		rootDomain = DomainUtils.getRootDomain(host);
     	}
-    	
-        if (StringUtils.isNoneBlank(originUrl)) {
-        	originHost = UrlUtils.getHost(originUrl);
-        	
-        	if (DomainUtils.isValidDomainMayPort(originHost)) {
-        		originRootDomain = DomainUtils.getRootDomain(originHost);
-        	}
-        }
         
         HelperPlus getter = new HelperPlus(BurpExtender.callbacks.getHelpers());
 
+        // 优先级1：同Host（protocol + host + port），忽略路径，找到最新的立即返回
         for (int i = historyMessages.length - 1; i >= 0; i--) {
             IHttpRequestResponse historyMessage = historyMessages[i];
             String hisShortUrl = HelperPlus.getBaseURL(historyMessage).toString();
             hisShortUrl = HelperPlus.removeUrlDefaultPort(hisShortUrl);
-            
-            String hisHost = UrlUtils.getHost(shortUrl);
-            String hisRootDomain = null;
-        	if (DomainUtils.isValidDomainMayPort(hisHost)) {
-        		hisRootDomain = DomainUtils.getRootDomain(hisHost);
-        	}
+            String hisHost = UrlUtils.getHost(hisShortUrl);
 
-        	//baseUrl完全相同
-            if (hisShortUrl.equalsIgnoreCase(shortUrl)) {
+            // 同Host匹配（忽略路径）
+            if (hisHost.equalsIgnoreCase(host)) {
                 String headerLine = getter.getHeaderLine(true, historyMessage, headerName);
                 if (StringUtils.isNotBlank(headerLine)){
                 	result.setSameSiteCookie(headerLine);
+                	return result; // 找到最近的同Host Cookie，立即返回
                 }
-            }else {
-            	//host是domain
-            	if (StringUtils.isNotBlank(rootDomain)) {
-            		if (StringUtils.isNotBlank(hisRootDomain) && rootDomain.equalsIgnoreCase(hisRootDomain)) {
-            		      String headerLine = getter.getHeaderLine(true, historyMessage, headerName);
-                          if (StringUtils.isNotBlank(headerLine)){
-                          	result.setSameRootDomainCookie(headerLine);
-                          }
-            		}
-            	}else {
-            		//如果host是IP，可能出现IP和域名是同一个站点的情况。可以尝试查询相同路径的Cookie
-            		
+            }
+        }
+        
+        // 优先级2：如果没找到同Host的，查找同根域名的
+        if (StringUtils.isNotBlank(rootDomain)) {
+            for (int i = historyMessages.length - 1; i >= 0; i--) {
+                IHttpRequestResponse historyMessage = historyMessages[i];
+                String hisShortUrl = HelperPlus.getBaseURL(historyMessage).toString();
+                hisShortUrl = HelperPlus.removeUrlDefaultPort(hisShortUrl);
+                String hisHost = UrlUtils.getHost(hisShortUrl);
+                String hisRootDomain = null;
+                
+            	if (DomainUtils.isValidDomainMayPort(hisHost)) {
+            		hisRootDomain = DomainUtils.getRootDomain(hisHost);
+            	}
+            	
+            	if (StringUtils.isNotBlank(hisRootDomain) && rootDomain.equalsIgnoreCase(hisRootDomain)) {
+            	    String headerLine = getter.getHeaderLine(true, historyMessage, headerName);
+                    if (StringUtils.isNotBlank(headerLine)){
+                    	result.setSameRootDomainCookie(headerLine);
+                    	return result; // 找到最近的同根域名Cookie，立即返回
+                    }
             	}
             }
         }
+        
         return result;
     }
     

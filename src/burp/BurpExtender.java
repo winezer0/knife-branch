@@ -44,6 +44,11 @@ import knife.UpdateCookieWithHistoryMenu;
 import knife.UpdateHeaderMenu;
 import messageTab.Info.InfoTabFactory;
 import messageTab.U2C.ChineseTabFactory;
+import org.apache.commons.lang3.StringUtils;
+import plus.AdvScopeUtils;
+import plus.ConfigEntriesPlus;
+import plus.MenuItemsPlus;
+import plus.ProcessHttpMessagePlus;
 
 public class BurpExtender extends GUI implements IBurpExtender, IContextMenuFactory, ITab, IHttpListener, IProxyListener, IExtensionStateListener {
 
@@ -76,7 +81,7 @@ public class BurpExtender extends GUI implements IBurpExtender, IContextMenuFact
         flushStd();
         BurpExtender.stdout.println(getFullExtensionName());
         BurpExtender.stdout.println(github);
-        
+
         DNSlogClient = callbacks.createBurpCollaboratorClientContext();
 
         configTable = new ConfigTable(new ConfigTableModel());
@@ -90,18 +95,31 @@ public class BurpExtender extends GUI implements IBurpExtender, IContextMenuFact
         configManager = new Gson().fromJson(content, ConfigManager.class);
         showToUI(configManager);
 
-        ChineseTabFactory chntabFactory = new ChineseTabFactory(null, false, helpers, callbacks);
-        InfoTabFactory infotabFactory = new InfoTabFactory(null, false, helpers, callbacks);
-
         //各项数据初始化完成后在进行这些注册操作，避免插件加载时的空指针异常
         callbacks.setExtensionName(getFullExtensionName());
         callbacks.registerContextMenuFactory(this);// for menus
-        callbacks.registerMessageEditorTabFactory(chntabFactory);// for Chinese
-        callbacks.registerMessageEditorTabFactory(infotabFactory);// for sensitive info
-        callbacks.addSuiteTab(BurpExtender.this);
-        callbacks.registerHttpListener(this);
-        callbacks.registerProxyListener(this);
-        callbacks.registerExtensionStateListener(this);
+
+        callbacks.addSuiteTab(this); //，在 Burp 主界面添加一个 自定义标签页
+        callbacks.registerHttpListener(this);  //监听所有 HTTP/HTTPS 流量
+        callbacks.registerProxyListener(this); //监听 Burp Proxy 代理层面的事件
+        callbacks.registerExtensionStateListener(this); //监听插件自身的生命周期事件
+
+        //自动加载用户指定的 Project Json文件,如果不存在会自动保存当前配置
+        AdvScopeUtils.autoLoadProjectConfig(callbacks);
+        //自动添加默认排除的域名列表
+        AdvScopeUtils.addDefaultExcludeHosts(callbacks);
+
+        //动态添加 编码转换 面板
+        if (AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.SHOW_MSG_CHINESE_TAB) != null) {
+            ChineseTabFactory chntabFactory = new ChineseTabFactory(null, false, helpers, callbacks);
+            callbacks.registerMessageEditorTabFactory(chntabFactory);// for Chinese
+        }
+        //动态添加 敏感信息 面板
+        if (AdvScopeUtils.getGuiConfigValue(ConfigEntriesPlus.SHOW_MSG_INFO_TAB) != null) {
+            InfoTabFactory infotabFactory = new InfoTabFactory(null, false, helpers, callbacks);
+            callbacks.registerMessageEditorTabFactory(infotabFactory);// for Information
+        }
+        BurpExtender.stdout.println("Load Extension Success ...");
     }
 
 
@@ -153,6 +171,9 @@ public class BurpExtender extends GUI implements IBurpExtender, IContextMenuFact
         if (updateHeader.getItemCount() > 0) {
             menu_item_list.add(updateHeader);
         }
+
+        //添加自定义的菜单项
+        MenuItemsPlus.addMenuItems(menu_item_list, this);
 
         //扫描攻击相关
         menu_item_list.add(new AddHostToScopeMenu(this));
@@ -250,6 +271,7 @@ public class BurpExtender extends GUI implements IBurpExtender, IContextMenuFact
             if (messageIsRequest) {
                 //add/update/append header
                 if (toolFlag == IBurpExtenderCallbacks.TOOL_PROXY) {
+                    ProcessHttpMessagePlus.messageReqHandleTraceless(messageInfo);
                     //##############################//
                     //handle it in processProxyMessage(). so we can see the changes in the proxy view.
                     //##############################//
@@ -264,6 +286,11 @@ public class BurpExtender extends GUI implements IBurpExtender, IContextMenuFact
                     if (isInCheckBoxScope(toolFlag, messageInfo)) {
                         ProcessManager.doChunk(messageIsRequest, messageInfo);
                     }
+                }
+            } else {
+                // response 修改
+                if (toolFlag == IBurpExtenderCallbacks.TOOL_PROXY) {
+                    ProcessHttpMessagePlus.messageRespHandleTraceless(messageInfo);
                 }
             }
         } catch (Exception e) {

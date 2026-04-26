@@ -40,6 +40,7 @@ import com.google.gson.Gson;
 
 import burp.BurpExtender;
 import burp.IBurpExtenderCallbacks;
+import plus.GuiUtils;
 
 public class GUI extends JFrame {
 
@@ -416,6 +417,16 @@ public class GUI extends JFrame {
 		});
 		panel_1.add(RestoreButton);
 
+		// 增加系统内存回收按钮
+		JButton systemClearButton = new JButton("system clear");
+		systemClearButton.setToolTipText("Manually trigger Java memory cleanup");
+		systemClearButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				GuiUtils.SystemClear();
+			}
+		});
+		panel_1.add(systemClearButton);
+
 		JButton testButton = new JButton("test");
 		testButton.setToolTipText("test");
 		testButton.addActionListener(new ActionListener() {
@@ -581,6 +592,7 @@ public class GUI extends JFrame {
 			}
 		}
 	}
+
 
 	public String initConfig() {
 		// need to override
