@@ -35,7 +35,14 @@ public class UtilsPlus {
         if(isIPFormat(host)){
             return dotToEscapeDot(domainToSuperiorDomain(host));
         }else {
-            return ".*" + "\\." + dotToEscapeDot(domainToSuperiorDomain(host));
+            String superiorDomain = domainToSuperiorDomain(host);
+            if (superiorDomain.equalsIgnoreCase(host)) {
+                //当域名本身就是一个无子域的域名时，此时获取子域名通配符 会导致错误 示例 baidu.com -> .*\.baidu\.com
+                // 因此需要对这种情况进行其他处理 此处选择直接返回 baidu\.com
+                return dotToEscapeDot(superiorDomain);
+            }else {
+                return ".*" + "\\." + dotToEscapeDot(superiorDomain);
+            }
         }
     }
 

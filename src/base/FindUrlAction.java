@@ -87,7 +87,7 @@ public class FindUrlAction implements ActionListener {
 		return result;
 	}
 
-	public static void doSendRequest(List<String> full_urls, String refererToUse) {
+	public static void doSendRequest(List<String> full_urls, HashMap<String, String> headers) {
 		try {
 			BlockingQueue<RequestTask> inputQueue = new LinkedBlockingQueue<>();
 
@@ -106,8 +106,6 @@ public class FindUrlAction implements ActionListener {
 			} catch (Exception e) {
 				e.printStackTrace(BurpExtender.getStderr());
 			}
-			HashMap<String, String> headers = new HashMap<String, String>();
-			headers.put("Referer", refererToUse);
 			doRequest(inputQueue, headers);
 		} catch (Exception e1) {
 			e1.printStackTrace(BurpExtender.getStderr());
@@ -140,7 +138,9 @@ public class FindUrlAction implements ActionListener {
 				urls = choseURLPath(urls);
 				if (urls.size() == 0) return;
 				List<String> full_urls = buildUrls(baseurl, urls);
-				doSendRequest(full_urls, originUrl);
+				HashMap<String, String> headers = new HashMap<>();
+				headers.put("Referer", originUrl);
+				doSendRequest(full_urls, headers);
 			}
 		};
 		new Thread(requestRunner).start();
@@ -386,10 +386,10 @@ public class FindUrlAction implements ActionListener {
 		Set<String> uniqueUrls = new LinkedHashSet<>();
 
 		for (String url : inputs) {
-		    if (url.length() >= 150 && url.contains("?")) {
-		        url = url.substring(0, url.indexOf('?'));
-		    }
-		    uniqueUrls.add(url); // 自动去重
+			if (url.length() >= 150 && url.contains("?")) {
+				url = url.substring(0, url.indexOf('?'));
+			}
+			uniqueUrls.add(url); // 自动去重
 		}
 
 		int n = uniqueUrls.size() + 1;
@@ -397,9 +397,9 @@ public class FindUrlAction implements ActionListener {
 
 		int index = 0;
 		for (String url : uniqueUrls) {
-		    possibleValues[index++] = url;
+			possibleValues[index++] = url;
 		}
-		
+
 		possibleValues[n - 1] = "Let Me Input";
 
 		String selectedValue = (String) JOptionPane.showInputDialog(null,
@@ -474,7 +474,7 @@ public class FindUrlAction implements ActionListener {
 			} else if (cleanUrl.contains("node_modules") || cleanUrl.contains("text/")) {
 				it.remove();
 			} else if (cleanUrl.startsWith("./") && cleanUrl.contains("-")) {
-				//比如./en-US 
+				//比如./en-US
 				it.remove();
 			}else if (cleanUrl.startsWith("./views/") || cleanUrl.contains("./src/")) {
 				//./views/user/Login

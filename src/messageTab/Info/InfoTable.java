@@ -7,6 +7,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.JTable;
@@ -123,7 +124,7 @@ public class InfoTable extends JTable {
 					InfoTable target = (InfoTable) e.getSource();
 					int row = target.getSelectedRow();
 					int column = target.getSelectedColumn();
-					
+
 					if (column ==-1) return;
 					//双击浏览器打开url
 					if (headers[column].equalsIgnoreCase("Value")) {//双击url在浏览器中打开
@@ -177,18 +178,18 @@ public class InfoTable extends JTable {
 		IMessageEditorController controller = infoPanel.getInfoTab().getController();
 		return FindUrlAction.getReferUrlOfMessage(controller.getHttpService(), controller.getRequest());
 	}
-	
+
 	public String getFullUrl() {
 		IMessageEditorController controller = infoPanel.getInfoTab().getController();
 		return FindUrlAction.getFullUrlOfMessage(controller.getHttpService(), controller.getRequest());
 	}
-	
-	
+
+
 	public List<String> getAllUrlsOfTarget() {
 		IMessageEditorController controller = infoPanel.getInfoTab().getController();
 		return FindUrlAction.FindAllUrlsOfTarget(controller.getHttpService(), controller.getRequest(), controller.getResponse());
 	}
-	
+
 	/**
 	 * 增加基于refer和当前URL的过滤
 	 * @param allUrlsOfTarget
@@ -202,7 +203,7 @@ public class InfoTable extends JTable {
 		return baseUrl;
 	}
 	/**
-	 * 从已有记录中直接获取【构建URL所需要的基准URL（BaseURL）】，或者从数据包中查找并选择 
+	 * 从已有记录中直接获取【构建URL所需要的基准URL（BaseURL）】，或者从数据包中查找并选择
 	 * @return
 	 */
 	public String getOrFindBaseUrl() {
@@ -222,7 +223,9 @@ public class InfoTable extends JTable {
 	public void doRequestUrl(List<String> urlsToRequest) {
 		String targetBaseUrl = getOrFindBaseUrl();
 		List<String> full_urls = FindUrlAction.buildUrls(targetBaseUrl, urlsToRequest);
-		FindUrlAction.doSendRequest(full_urls, targetBaseUrl);
+		HashMap<String, String> headers = new HashMap<>();
+		headers.put("Referer", targetBaseUrl);
+		FindUrlAction.doSendRequest(full_urls, headers);
 	}
 
 	public void doOpenUrlInBrowser(List<String> urlsOrPathsToRequest) {
@@ -233,15 +236,15 @@ public class InfoTable extends JTable {
 		}else {
 			full_urls = urlsOrPathsToRequest;
 		}
-		
+
 		String browserPath = BurpExtender.getConfigTableModel().getConfigValueByKey("browserPath");
 		for (String url:full_urls) {
 			SystemUtils.browserOpen(url, browserPath);
 		}
 	}
-	
+
 	public boolean needBaseUrl(List<String> urlsToRequest) {
-		
+
 		for (String urlOrPath:urlsToRequest) {
 			if (StringUtils.isNotBlank(urlOrPath)) {
 				if (!urlOrPath.toLowerCase().startsWith("http://") && !urlOrPath.toLowerCase().startsWith("https://")) {
@@ -268,15 +271,15 @@ public class InfoTable extends JTable {
 		return result;
 	}
 
-	
+
 	public String getSelectedContent() {
 		int[] rows = this.getSelectedRows();
 		int[] columns = this.getSelectedColumns();
-		
-	    if (rows == null || rows.length == 0 || columns == null || columns.length == 0) {
-	        return ""; // 或者 return null;
-	    }
-	    
+
+		if (rows == null || rows.length == 0 || columns == null || columns.length == 0) {
+			return ""; // 或者 return null;
+		}
+
 		List<String> result = new ArrayList<>();
 		for (int row : rows) {
 			List<String> line = new ArrayList<>();
